@@ -15,11 +15,26 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import HeroParcel from "@/components/HeroParcel";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import gsap from "gsap";
-import HeroParcel from "@/components/HeroParcel";
 
 gsap.registerPlugin(ScrollTrigger);
+
+type BoxName = "floating" | "bouncing" | "droppable";
+type RotationAxis = "x" | "y" | "z";
+type BoxRotation = Record<RotationAxis, number>;
+const ROTATION_LABELS: Record<RotationAxis, string> = {
+  x: "X axis - pitch",
+  y: "Y axis - yaw",
+  z: "Z axis - roll",
+};
+
+const BOX_ROTATIONS: Record<BoxName, BoxRotation> = {
+  floating: { x: 0, y: -90, z: 0 },
+  bouncing: { x: 53, y: -71, z: 18 },
+  droppable: { x: 0, y: -90, z: 0 },
+} as const;
 
 export default function Home() {
   const journeyRef = useRef<HTMLElement>(null);
@@ -34,10 +49,22 @@ export default function Home() {
   const [tracking, setTracking] = useState("");
   const [trackingResult, setTrackingResult] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [topParcelPosition, setTopParcelPosition] = useState({ left: 5, top: 15 });
   const [gravityBoxPos, setGravityBoxPos] = useState<{ x: number; y: number } | null>(null);
   const [isGravityDragging, setIsGravityDragging] = useState(false);
+  const [boxRotations, setBoxRotations] = useState(BOX_ROTATIONS);
+  const [activeRotationBox, setActiveRotationBox] = useState<BoxName>("floating");
   const gravityDragRef = useRef<{ offsetX: number; offsetY: number; pointerId: number } | null>(null);
+
+  function updateBoxRotation(axis: RotationAxis, value: number) {
+    const degrees = Math.max(-180, Math.min(180, value));
+    setBoxRotations((current) => ({
+      ...current,
+      [activeRotationBox]: {
+        ...current[activeRotationBox],
+        [axis]: degrees,
+      },
+    }));
+  }
 
   useEffect(() => {
     const section = journeyRef.current;
@@ -490,10 +517,8 @@ export default function Home() {
       sectionBounds.height - parcelBounds.height,
     );
 
-    setTopParcelPosition({
-      left: (left / sectionBounds.width) * 100,
-      top: (top / sectionBounds.height) * 100,
-    });
+    e.currentTarget.style.left = `${(left / sectionBounds.width) * 100}%`;
+    e.currentTarget.style.top = `${(top / sectionBounds.height) * 100}%`;
   }
 
   function handleParcelDragEnd(e: React.PointerEvent<HTMLDivElement>) {
@@ -514,7 +539,7 @@ export default function Home() {
     };
     try {
       box.setPointerCapture(e.pointerId);
-    } catch (_) {}
+    } catch {}
     setIsGravityDragging(true);
 
     if (!gravityBoxPos) {
@@ -552,7 +577,7 @@ export default function Home() {
     gravityDragRef.current = null;
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch (_) {}
+    } catch {}
     setIsGravityDragging(false);
 
     // True gravity drop from current position all the way down to the bottom floor
@@ -596,8 +621,11 @@ export default function Home() {
   return (
     <main>
       {/* NAVIGATION */}
-      <nav className="navbar">
-        <a href="#" className="logo">
+      <nav className="navbar [height:82px] [padding:0_7%] [display:flex] [align-items:center] [justify-content:space-between] [background:var(--cream)] [position:relative] [z-index:50]">
+        <a
+          href="#"
+          className="logo [font-family:Fredoka,sans-serif] [font-size:37px] [font-weight:700] [letter-spacing:-2px]"
+        >
           plop<span>.</span>
         </a>
 
@@ -614,16 +642,27 @@ export default function Home() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <a href="/login" className="nav-cta" style={{ background: "transparent", color: "var(--dark)", border: "1.5px solid #e4dfd5" }}>
+          <a
+            href="/login"
+            className="nav-cta [background:var(--dark)] [color:white] [padding:13px_20px] [border-radius:30px] [font-size:13px] [display:flex] [align-items:center] [gap:10px]"
+            style={{
+              background: "transparent",
+              color: "var(--dark)",
+              border: "1.5px solid #e4dfd5",
+            }}
+          >
             Sign in
           </a>
-          <a href="/register" className="nav-cta">
+          <a
+            href="/register"
+            className="nav-cta [background:var(--dark)] [color:white] [padding:13px_20px] [border-radius:30px] [font-size:13px] [display:flex] [align-items:center] [gap:10px]"
+          >
             Register <ArrowUpRight size={17} />
           </a>
         </div>
 
         <button
-          className="mobile-menu"
+          className="mobile-menu [display:none]"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle navigation"
         >
@@ -632,12 +671,22 @@ export default function Home() {
       </nav>
 
       {/* HERO AND SCROLL JOURNEY */}
-      <section className="journey" ref={journeyRef}>
-        <div className="journey-background" />
+      <section
+        className="journey [height:calc(100vh_-_82px)] [min-height:650px] [position:relative] [overflow:hidden] [background:var(--cream)] [isolation:isolate]"
+        ref={journeyRef}
+      >
+        <div
+          className="journey-background [position:absolute] [inset:0] [z-index:-1]"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 45%, #fff 0%, transparent 65%), radial-gradient(ellipse at 85% 15%, #fce5cf 0%, transparent 35%)",
+          }}
+        />
 
-        <div className="hero-copy scene-copy">
-          <span className="eyebrow">
-            <span className="live-dot" /> Plop your parcel, ANYWHERE!
+        <div className="hero-copy scene-copy [position:absolute] [left:10%] [top:50%] [transform:translateY(-50%)] [z-index:5] [width:42%]">
+          <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
+            <span className="live-dot [width:7px] [height:7px] [background:#77b77c] [border-radius:50%] [box-shadow:0_0_0_5px_#77b77c22]" />{" "}
+            Plop your parcel, ANYWHERE!
           </span>
 
           <h1>
@@ -652,45 +701,63 @@ export default function Home() {
             Deliveries made a little more delightful.
           </p>
 
-          <div className="hero-actions">
-            <a href="#tracking" className="button-primary">
+          <div className="hero-actions [display:flex] [gap:12px] [flex-wrap:wrap]">
+            <a
+              href="#tracking"
+              className="button-primary [background:var(--orange)] [color:white] [box-shadow:0_8px_22px_#ff914d33]"
+            >
               Send a parcel <ArrowRight size={18} />
             </a>
-            <a href="#services" className="button-secondary">
+            <a
+              href="#services"
+              className="button-secondary [border:1px_solid_#e4dfd5] [background:#fffdf8]"
+            >
               Explore services
             </a>
           </div>
         </div>
 
         {/* FLOATING PARCELS */}
-        <div className="floating-boxes">
+        <div className="floating-boxes [position:absolute] [width:100%] [height:100%] [top:0] [left:0] [perspective:1000px] [pointer-events:none] [z-index:6]">
           <div
-            className="float-box float-a"
-            style={{ left: `${topParcelPosition.left}%`, top: `${topParcelPosition.top}%` }}
+            className="float-box float-a [position:absolute] [width:190px] [height:190px] [transform-style:preserve-3d] [will-change:transform] [overflow:visible] [top:15%] [left:5%] [z-index:1] [cursor:grab] [pointer-events:auto] [touch-action:none]"
+            onPointerDown={handleParcelDragStart}
+            onPointerMove={handleParcelDragMove}
+            onPointerUp={handleParcelDragEnd}
+            onPointerCancel={handleParcelDragEnd}
           >
-            <HeroParcel speed={0.7} phase={0} motion="logo-tour" />
+            <HeroParcel
+              motionSpeed={0.2}
+              motion="logo-tour"
+              rotationXDegrees={boxRotations.floating.x}
+              rotationYDegrees={boxRotations.floating.y}
+              rotationZDegrees={boxRotations.floating.z}
+            />
           </div>
         </div>
 
         {/* HERO MAIN PARCEL (3D & PANNABLE) */}
-        <div className="hero-box-container">
-          <div className="hero-box-bob">
-            <div className="hero-box-canvas-wrapper">
+        <div className="hero-box-container [position:absolute] [top:18%] [right:clamp(24px,_6vw,_90px)] [width:min(440px,_35vw)] [height:min(440px,_35vw)] [min-width:260px] [min-height:260px] [pointer-events:auto] [z-index:10] [user-select:none]">
+          <div className="hero-box-layout [width:100%] [height:100%] [display:flex] [flex-direction:column] [align-items:center] [justify-content:center]">
+            <div className="hero-box-canvas-wrapper [width:100%] [height:90%] [pointer-events:auto] [user-select:none] [cursor:grab]">
               <HeroParcel
                 interactive
-                speed={1}
-                phase={0}
                 motion="bob"
                 quarterView
+                rotationXDegrees={boxRotations.bouncing.x}
+                rotationYDegrees={boxRotations.bouncing.y}
+                rotationZDegrees={boxRotations.bouncing.z}
               />
             </div>
-            <div className="hero-box-shadow" />
+            <div className="hero-box-shadow [width:58%] [height:20px] [border-radius:50%] [background:radial-gradient(ellipse_at_center,_rgba(60,_25,_5,_0.28)_0%,_rgba(60,_25,_5,_0)_72%)] [margin-top:-12px] [opacity:0.35]" />
           </div>
         </div>
 
         {/* GATHERING TEXT */}
-        <div className="gather-copy scene-copy">
-          <span className="eyebrow">IT ALL STARTS SOMEWHERE</span>
+        <div className="gather-copy scene-copy [position:absolute] [left:10%] [top:50%] [transform:translateY(-50%)] [z-index:5] [width:42%]">
+          <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
+            IT ALL STARTS SOMEWHERE
+          </span>
           <h2>
             Let&apos;s get
             <br />
@@ -700,24 +767,30 @@ export default function Home() {
         </div>
 
         {/* ASSEMBLED PARCEL */}
-        <div className="assembled-parcel">
-          <div className="parcel-flap flap-left" />
-          <div className="parcel-flap flap-right" />
-          <div className="parcel-flap flap-back" />
-          <div className="parcel-face">
-            <div className="tape-strip" />
-            <div className="shipping-label">
+        <div className="assembled-parcel [position:absolute] [width:210px] [height:190px] [top:48%] [left:65%] [opacity:0] [transform:translate(-50%,_-50%)_scale(0.2)_rotate(-15deg)] [transform-style:preserve-3d] [z-index:3] [filter:drop-shadow(0_25px_20px_#6b462833)]">
+          <div className="parcel-flap flap-left [position:absolute] [width:50%] [height:35%] [top:-30%] [background:#e1b17f] [border:2px_solid_#b98556] [z-index:2] [transform-origin:bottom] [left:0] [transform:rotateX(90deg)]" />
+          <div className="parcel-flap flap-right [position:absolute] [width:50%] [height:35%] [top:-30%] [background:#e1b17f] [border:2px_solid_#b98556] [z-index:2] [transform-origin:bottom] [right:0] [transform:rotateX(90deg)]" />
+          <div className="parcel-flap flap-back [position:absolute] [width:100%] [height:35%] [background:#e1b17f] [border:2px_solid_#b98556] [z-index:2] [transform-origin:bottom] [left:0] [top:-22%]" />
+          <div className="parcel-face [position:absolute] [inset:0] [background:#c9915e] [border:2px_solid_#ad794e] [display:flex] [align-items:center] [justify-content:center]">
+            <div className="tape-strip [position:absolute] [width:38px] [height:100%] [left:42%] [background:#ff914d] [transform:scaleX(0)] [transform-origin:left] [z-index:2]" />
+            <div className="shipping-label [position:absolute] [width:95px] [height:78px] [padding:9px] [background:#fff9e9] [color:#39332c] [z-index:3] [transform:scale(0)] [display:flex] [flex-direction:column] [gap:5px] [font-size:8px]">
               <strong>PLOP.</strong>
               <span>TO: SOMEWHERE NICE</span>
-              <div className="barcode">|||| ||| || ||||</div>
+              <div className="barcode [letter-spacing:2px] [font-size:13px]">
+                |||| ||| || ||||
+              </div>
             </div>
-            <span className="parcel-mark">HANDLE WITH CARE ♡</span>
+            <span className="parcel-mark [position:absolute] [bottom:13px] [left:12px] [font-size:8px] [letter-spacing:1px] [color:#f9e5ca]">
+              HANDLE WITH CARE ♡
+            </span>
           </div>
         </div>
 
         {/* SEAL TEXT */}
-        <div className="seal-copy scene-copy">
-          <span className="eyebrow">PACKED WITH CARE</span>
+        <div className="seal-copy scene-copy [position:absolute] [left:10%] [top:50%] [transform:translateY(-50%)] [z-index:5] [width:42%]">
+          <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
+            PACKED WITH CARE
+          </span>
           <h2>
             All boxed up.
             <br />
@@ -727,23 +800,25 @@ export default function Home() {
         </div>
 
         {/* TRUCK SCENE */}
-        <div className="truck-scene">
-          <div className="road" />
-          <div className="road-line" />
-          <div className="delivery-truck">
-            <div className="truck-box">
+        <div className="truck-scene [position:absolute] [inset:0] [opacity:0] [overflow:hidden] [background:#f9edda]">
+          <div className="road [position:absolute] [bottom:16%] [width:100%] [height:95px] [background:#d9d0c2] [border-top:7px_solid_#c4b9a9]" />
+          <div className="road-line [position:absolute] [bottom:calc(16%_+_42px)] [width:100%] [border-top:4px_dashed_#fff9ef]" />
+          <div className="delivery-truck [position:absolute] [bottom:calc(16%_+_75px)] [left:15%] [width:300px] [height:125px] [transform:translateX(-650px)]">
+            <div className="truck-box [position:absolute] [left:0] [bottom:0] [width:190px] [height:115px] [background:#ff914d] [border:3px_solid_#e67c39] [border-radius:8px_8px_2px_2px] [display:grid] [place-items:center] [color:white] [font-family:Fredoka] [font-size:34px]">
               <span>PLOP.</span>
             </div>
-            <div className="truck-cabin">
-              <div className="truck-window" />
+            <div className="truck-cabin [position:absolute] [width:105px] [height:80px] [bottom:0] [right:0] [background:#e9a36f] [border-radius:20px_20px_3px_3px] [border:3px_solid_#d18a58]">
+              <div className="truck-window [position:absolute] [top:10px] [right:9px] [width:58px] [height:35px] [border-radius:10px_10px_3px_3px] [background:#b7e1f5]" />
             </div>
-            <div className="wheel wheel-one" />
-            <div className="wheel wheel-two" />
+            <div className="wheel wheel-one [position:absolute] [bottom:-17px] [width:40px] [height:40px] [background:#34332e] [border:7px_solid_#79766c] [border-radius:50%] [left:25px]" />
+            <div className="wheel wheel-two [position:absolute] [bottom:-17px] [width:40px] [height:40px] [background:#34332e] [border:7px_solid_#79766c] [border-radius:50%] [right:20px]" />
           </div>
         </div>
 
-        <div className="truck-copy scene-copy">
-          <span className="eyebrow">ON THE ROAD</span>
+        <div className="truck-copy scene-copy [position:absolute] [left:10%] [top:50%] [transform:translateY(-50%)] [z-index:5] [width:42%]">
+          <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
+            ON THE ROAD
+          </span>
           <h2>
             Off we <span>go!</span>
           </h2>
@@ -751,18 +826,26 @@ export default function Home() {
         </div>
 
         {/* AIRPLANE SCENE */}
-        <div className="sky-scene">
-          <div className="cloud cloud-one">☁</div>
-          <div className="cloud cloud-two">☁</div>
-          <div className="cloud cloud-three">☁</div>
-          <div className="airplane">
+        <div className="sky-scene [position:absolute] [inset:0] [opacity:0] [background:linear-gradient(180deg,_#b6def3,_#f1f7ed)] [overflow:hidden]">
+          <div className="cloud cloud-one [position:absolute] [color:white] [font-size:170px] [opacity:0.8] [top:10%] [left:10%]">
+            ☁
+          </div>
+          <div className="cloud cloud-two [position:absolute] [color:white] [font-size:230px] [opacity:0.8] [top:55%] [right:10%]">
+            ☁
+          </div>
+          <div className="cloud cloud-three [position:absolute] [color:white] [font-size:170px] [opacity:0.8] [bottom:0] [left:40%]">
+            ☁
+          </div>
+          <div className="airplane [position:absolute] [top:42%] [left:36%] [color:#ff914d] [transform:translateX(-500px)] [filter:drop-shadow(0_18px_12px_#5d91ac33)]">
             <Plane size={115} strokeWidth={1.4} />
             <span>PLOP</span>
           </div>
         </div>
 
-        <div className="plane-copy scene-copy">
-          <span className="eyebrow">GOING THE EXTRA MILE</span>
+        <div className="plane-copy scene-copy [position:absolute] [left:10%] [top:50%] [transform:translateY(-50%)] [z-index:5] [width:42%]">
+          <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
+            GOING THE EXTRA MILE
+          </span>
           <h2>
             Taking the
             <br />
@@ -772,44 +855,49 @@ export default function Home() {
         </div>
 
         {/* HOUSE SCENE */}
-        <div className="home-scene">
-          <div className="sun" />
-          <div className="house">
-            <div className="roof" />
-            <div className="house-body">
-              <div className="house-window" />
-              <div className="home-door">
+        <div className="home-scene [position:absolute] [inset:0] [opacity:0] [background:linear-gradient(#c6e6f3_0_72%,_#c8dfb3_72%)] [overflow:hidden]">
+          <div className="sun [position:absolute] [right:17%] [top:12%] [width:90px] [height:90px] [background:#ffd68c] [border-radius:50%]" />
+          <div className="house [position:absolute] [bottom:17%] [left:50%] [transform:translateX(-50%)] [width:330px] [height:310px]">
+            <div className="roof [position:absolute] [top:0] [left:-30px] [width:390px] [height:170px] [background:#d17d57] [clip-path:polygon(50%_0,_100%_100%,_0_100%)]" />
+            <div className="house-body [position:absolute] [bottom:0] [left:15px] [width:300px] [height:205px] [background:#fff1d9] [border:4px_solid_#e6d5b9]">
+              <div className="house-window [position:absolute] [top:40px] [left:27px] [width:65px] [height:70px] [background:#a7d9e8] [border:7px_solid_white] [border-radius:5px]" />
+              <div className="home-door [position:absolute] [bottom:0] [left:112px] [width:75px] [height:135px] [background:#ff914d] [border:5px_solid_#e8a06c] [transform-origin:left]">
                 <span />
               </div>
-              <div className="house-window window-two" />
+              <div className="house-window window-two [position:absolute] [top:40px] [width:65px] [height:70px] [background:#a7d9e8] [border:7px_solid_white] [border-radius:5px] [right:27px]" />
             </div>
           </div>
-          <div className="home-ground" />
-          <div className="home-parcel">
-            <div className="mini-box">
+          <div className="home-ground [position:absolute] [width:100%] [bottom:0] [height:18%] [background:#a6c78c]" />
+          <div className="home-parcel [position:absolute] [bottom:18%] [left:calc(50%_+_170px)] [z-index:5] [filter:drop-shadow(0_12px_10px_#71502b33)]">
+            <div className="mini-box [width:100px] [height:85px] [background:#c9915e] [border:3px_solid_#a8734b] [display:grid] [place-items:center] [color:white] [font-family:Fredoka] [font-size:20px]">
               <span>PLOP.</span>
             </div>
           </div>
         </div>
 
         {/* FINAL TEXT */}
-        <div className="final-copy scene-copy">
-          <div className="success-icon">
+        <div className="final-copy scene-copy [text-align:center] [left:10%] [width:42%] [top:50%] [transform:translateY(-50%)] [position:absolute] [z-index:5]">
+          <div className="success-icon [display:inline-grid] [place-items:center] [background:#e0efd8] [color:#669a61] [width:60px] [height:60px] [border-radius:50%] [margin-bottom:20px]">
             <CheckCircle2 size={30} />
           </div>
-          <span className="eyebrow">MISSION ACCOMPLISHED</span>
+          <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
+            MISSION ACCOMPLISHED
+          </span>
           <h2>
             <span>Plop!</span> It&apos;s here.
           </h2>
           <p>Your parcel made it. Delivered with a little bit of joy.</p>
-          <a href="#tracking" className="button-primary">
+          <a
+            href="#tracking"
+            className="button-primary [background:var(--orange)] [color:white] [box-shadow:0_8px_22px_#ff914d33]"
+          >
             Send another parcel <ArrowRight size={18} />
           </a>
         </div>
 
-        <div className="scroll-indicator">
+        <div className="scroll-indicator [position:absolute] [bottom:16px] [left:50%] [transform:translateX(-50%)] [z-index:20] [opacity:1] [visibility:visible] [display:flex] [flex-direction:column] [align-items:center] [gap:10px] [padding:9px_14px_7px] [border:1px_solid_#e5dacc] [border-radius:16px] [background:#fff9efeb] [box-shadow:0_8px_24px_#8d684514] [font-size:9px] [letter-spacing:2px] [color:#898477] [pointer-events:none]">
           <span>SCROLL TO FOLLOW THE JOURNEY</span>
-          <div className="scroll-line" />
+          <div className="scroll-line [height:30px] [width:1px] [background:var(--orange)] [animation:scrollPulse_1.5s_infinite]" />
         </div>
       </section>
 
@@ -836,19 +924,33 @@ export default function Home() {
         onPointerCancel={handleGravityBoxDragEnd}
       >
         <div className="bottom-parcel" ref={bottomParcelRef}>
-          <HeroParcel speed={0} phase={0} motion="still" quarterView />
+          <HeroParcel
+            motion="still"
+            quarterView
+            rotationXDegrees={boxRotations.droppable.x}
+            rotationYDegrees={boxRotations.droppable.y}
+            rotationZDegrees={boxRotations.droppable.z}
+          />
         </div>
-        <div className="drop-particles">
+        <div className="drop-particles [position:absolute] [left:50%] [bottom:8px] [width:1px] [height:1px]">
           {Array.from({ length: 7 }, (_, index) => (
-            <span className="drop-particle" key={index} />
+            <span
+              className="drop-particle [position:absolute] [width:9px] [height:3px] [border-radius:999px] [background:#ff914d] [opacity:0] [transform:translate(-50%,_-50%)] [box-shadow:0_0_9px_#ff914d80]"
+              key={index}
+            />
           ))}
         </div>
       </div>
 
       {/* SERVICES */}
-      <section className="services section-pad" id="services">
-        <div className="section-heading">
-          <span className="eyebrow">A LITTLE SOMETHING FOR EVERYONE</span>
+      <section
+        className="services section-pad [background:#fffdf8] [padding:120px_9%]"
+        id="services"
+      >
+        <div className="section-heading [margin-bottom:55px]">
+          <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
+            A LITTLE SOMETHING FOR EVERYONE
+          </span>
           <h2>
             Wherever it goes,
             <br />
@@ -857,41 +959,53 @@ export default function Home() {
           <p>From just-around-the-corner to across-the-world.</p>
         </div>
 
-        <div className="service-grid">
-          <article className="service-card orange-card">
-            <div className="service-icon">
+        <div className="service-grid [display:grid] [grid-template-columns:repeat(3,_1fr)] [gap:22px]">
+          <article className="service-card orange-card [padding:32px] [min-height:330px] [border-radius:24px] [position:relative] [overflow:hidden] [display:flex] [flex-direction:column] [background:#ffeadb]">
+            <div className="service-icon [width:55px] [height:55px] [display:grid] [place-items:center] [background:#ffffff9c] [border-radius:17px] [margin-bottom:24px]">
               <Truck size={33} />
             </div>
-            <span className="service-tag">QUICK & EASY</span>
+            <span className="service-tag [font-size:9px] [font-weight:800] [letter-spacing:1.5px] [color:#817b70]">
+              QUICK & EASY
+            </span>
             <h3>Local delivery</h3>
             <p>For parcels that don&apos;t have to travel too far.</p>
-            <div className="card-decoration">📦</div>
+            <div className="card-decoration [position:absolute] [right:15px] [top:90px] [font-size:65px] [opacity:0.7] [transform:rotate(-15deg)]">
+              📦
+            </div>
             <a href="#tracking">
               Learn more <ArrowUpRight size={17} />
             </a>
           </article>
 
-          <article className="service-card blue-card">
-            <div className="service-icon">
+          <article className="service-card blue-card [padding:32px] [min-height:330px] [border-radius:24px] [position:relative] [overflow:hidden] [display:flex] [flex-direction:column] [background:#e0f1fa]">
+            <div className="service-icon [width:55px] [height:55px] [display:grid] [place-items:center] [background:#ffffff9c] [border-radius:17px] [margin-bottom:24px]">
               <Package size={33} />
             </div>
-            <span className="service-tag">THE EVERYDAY HERO</span>
+            <span className="service-tag [font-size:9px] [font-weight:800] [letter-spacing:1.5px] [color:#817b70]">
+              THE EVERYDAY HERO
+            </span>
             <h3>Standard delivery</h3>
             <p>Reliable delivery for your everyday parcels.</p>
-            <div className="card-decoration">🎁</div>
+            <div className="card-decoration [position:absolute] [right:15px] [top:90px] [font-size:65px] [opacity:0.7] [transform:rotate(-15deg)]">
+              🎁
+            </div>
             <a href="#tracking">
               Learn more <ArrowUpRight size={17} />
             </a>
           </article>
 
-          <article className="service-card green-card">
-            <div className="service-icon">
+          <article className="service-card green-card [padding:32px] [min-height:330px] [border-radius:24px] [position:relative] [overflow:hidden] [display:flex] [flex-direction:column] [background:#e8efd9]">
+            <div className="service-icon [width:55px] [height:55px] [display:grid] [place-items:center] [background:#ffffff9c] [border-radius:17px] [margin-bottom:24px]">
               <Plane size={33} />
             </div>
-            <span className="service-tag">FAR & WIDE</span>
+            <span className="service-tag [font-size:9px] [font-weight:800] [letter-spacing:1.5px] [color:#817b70]">
+              FAR & WIDE
+            </span>
             <h3>International</h3>
             <p>Sending something a little further? No problem.</p>
-            <div className="card-decoration">🌎</div>
+            <div className="card-decoration [position:absolute] [right:15px] [top:90px] [font-size:65px] [opacity:0.7] [transform:rotate(-15deg)]">
+              🌎
+            </div>
             <a href="#tracking">
               Learn more <ArrowUpRight size={17} />
             </a>
@@ -900,10 +1014,17 @@ export default function Home() {
       </section>
 
       {/* TRACKING */}
-      <section className="tracking-section section-pad" id="tracking">
-        <div className="tracking-decoration">📦</div>
-        <div className="tracking-content">
-          <span className="eyebrow">WHERE&apos;S MY PLOP?</span>
+      <section
+        className="tracking-section section-pad [background:#292923] [color:white] [position:relative] [overflow:hidden] [display:flex] [justify-content:center] [text-align:center] [padding:120px_9%]"
+        id="tracking"
+      >
+        <div className="tracking-decoration [position:absolute] [font-size:190px] [opacity:0.08] [left:5%] [top:20%] [transform:rotate(-15deg)]">
+          📦
+        </div>
+        <div className="tracking-content [width:100%] [max-width:700px] [position:relative] [z-index:2]">
+          <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
+            WHERE&apos;S MY PLOP?
+          </span>
           <h2>
             Your parcel called.
             <br />
@@ -911,7 +1032,10 @@ export default function Home() {
           </h2>
           <p>Pop in your tracking number and see where it&apos;s up to.</p>
 
-          <form className="tracking-form" onSubmit={handleTracking}>
+          <form
+            className="tracking-form [display:flex] [align-items:center] [background:white] [padding:8px_8px_8px_18px] [border-radius:50px] [margin-top:35px] [color:#77746c] [gap:12px]"
+            onSubmit={handleTracking}
+          >
             <MapPin size={20} />
             <input
               value={tracking}
@@ -929,7 +1053,7 @@ export default function Home() {
           </form>
 
           {trackingResult && (
-            <div className="tracking-result">
+            <div className="tracking-result [display:flex] [align-items:center] [justify-content:center] [gap:8px] [margin-top:18px] [font-size:12px] [color:#bde5b3]">
               <CheckCircle2 size={19} />
               Prototype only: tracking lookup for {tracking} will be connected
               to your backend.
@@ -939,9 +1063,14 @@ export default function Home() {
       </section>
 
       {/* WHY PLOP */}
-      <section className="why-section section-pad" id="about">
-        <div className="section-heading">
-          <span className="eyebrow">WHY THE PLOP?</span>
+      <section
+        className="why-section section-pad [background:var(--cream)] [padding:120px_9%]"
+        id="about"
+      >
+        <div className="section-heading [margin-bottom:55px]">
+          <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
+            WHY THE PLOP?
+          </span>
           <h2>
             Good things
             <br />
@@ -949,23 +1078,23 @@ export default function Home() {
           </h2>
         </div>
 
-        <div className="benefit-grid">
+        <div className="benefit-grid [display:grid] [grid-template-columns:repeat(3,_1fr)] [gap:40px]">
           <div className="benefit">
-            <div className="benefit-icon">
+            <div className="benefit-icon [width:58px] [height:58px] [border-radius:18px] [background:#ffe5d2] [color:#dc8048] [display:grid] [place-items:center] [margin-bottom:20px]">
               <Clock3 />
             </div>
             <h3>Right on time</h3>
             <p>We believe your parcels deserve punctuality.</p>
           </div>
           <div className="benefit">
-            <div className="benefit-icon">
+            <div className="benefit-icon [width:58px] [height:58px] [border-radius:18px] [background:#ffe5d2] [color:#dc8048] [display:grid] [place-items:center] [margin-bottom:20px]">
               <ShieldCheck />
             </div>
             <h3>Safe & sound</h3>
             <p>Every parcel deserves a little extra care.</p>
           </div>
           <div className="benefit">
-            <div className="benefit-icon">
+            <div className="benefit-icon [width:58px] [height:58px] [border-radius:18px] [background:#ffe5d2] [color:#dc8048] [display:grid] [place-items:center] [margin-bottom:20px]">
               <PackageCheck />
             </div>
             <h3>Easy peasy</h3>
@@ -975,16 +1104,19 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="footer">
-        <div className="footer-main">
+      <footer className="footer [background:#f0e9dd] [padding:65px_9%_25px]">
+        <div className="footer-main [display:flex] [justify-content:space-between] [gap:50px] [padding-bottom:55px]">
           <div>
-            <a href="#" className="logo footer-logo">
+            <a
+              href="#"
+              className="logo footer-logo [font-family:Fredoka,sans-serif] [font-size:37px] [font-weight:700] [letter-spacing:-2px]"
+            >
               plop<span>.</span>
             </a>
             <p>Little boxes. Big adventures.</p>
           </div>
 
-          <div className="footer-links">
+          <div className="footer-links [display:flex] [gap:90px]">
             <div>
               <strong>Explore</strong>
               <a href="#services">Services</a>
@@ -998,15 +1130,16 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div className="footer-bottom">
+        <div className="footer-bottom [padding-top:22px] [border-top:1px_solid_#ded6c9] [display:flex] [justify-content:space-between] [font-size:11px] [color:#898477]">
           <span>© 2026 PLOP. Made for the journey.</span>
           <span>Handle with care ♡</span>
         </div>
       </footer>
 
       <style jsx global>{`
+        /* Residual CSS: global rules, responsive overrides, pseudo-selectors and animation keyframes.
+           Component layout/appearance declarations have been moved to Tailwind arbitrary utilities in JSX. */
         @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fredoka:wght@400;500;600;700&display=swap");
-
         :root {
           --cream: #fff9ef;
           --orange: #ff914d;
@@ -1015,7 +1148,6 @@ export default function Home() {
           --blue: #b7e1f5;
           --green: #dce9ce;
         }
-
         * {
           box-sizing: border-box;
         }
@@ -1040,90 +1172,11 @@ export default function Home() {
         button {
           cursor: pointer;
         }
-
-        .navbar {
-          height: 82px;
-          padding: 0 7%;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background: var(--cream);
-          position: relative;
-          z-index: 50;
-        }
-        .logo {
-          font-family: "Fredoka", sans-serif;
-          font-size: 37px;
-          font-weight: 700;
-          letter-spacing: -2px;
-        }
         .logo span {
           color: var(--orange);
         }
-        .nav-links {
-          display: flex;
-          gap: 38px;
-          font-size: 13px;
-          font-weight: 600;
-          color: #666258;
-        }
         .nav-links a:hover {
           color: var(--orange);
-        }
-        .nav-cta {
-          background: var(--dark);
-          color: white;
-          padding: 13px 20px;
-          border-radius: 30px;
-          font-size: 13px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .mobile-menu {
-          display: none;
-        }
-
-        .journey {
-          height: calc(100vh - 82px);
-          min-height: 650px;
-          position: relative;
-          overflow: hidden;
-          background: var(--cream);
-          isolation: isolate;
-        }
-        .journey-background {
-          position: absolute;
-          inset: 0;
-          background:
-            radial-gradient(ellipse at 50% 45%, #fff 0%, transparent 65%),
-            radial-gradient(ellipse at 85% 15%, #fce5cf 0%, transparent 35%);
-          z-index: -1;
-        }
-        .scene-copy {
-          position: absolute;
-          left: 10%;
-          top: 50%;
-          transform: translateY(-50%);
-          z-index: 5;
-          width: 42%;
-        }
-        .eyebrow {
-          display: inline-flex;
-          align-items: center;
-          gap: 9px;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 2px;
-          color: #8c8679;
-          margin-bottom: 23px;
-        }
-        .live-dot {
-          width: 7px;
-          height: 7px;
-          background: #77b77c;
-          border-radius: 50%;
-          box-shadow: 0 0 0 5px #77b77c22;
         }
         .hero-copy h1,
         .scene-copy h2,
@@ -1151,11 +1204,6 @@ export default function Home() {
           font-size: 15px;
           margin-bottom: 30px;
         }
-        .hero-actions {
-          display: flex;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
         .button-primary,
         .button-secondary {
           display: inline-flex;
@@ -1168,47 +1216,8 @@ export default function Home() {
           font-weight: 700;
           transition: 0.2s;
         }
-        .button-primary {
-          background: var(--orange);
-          color: white;
-          box-shadow: 0 8px 22px #ff914d33;
-        }
         .button-primary:hover {
           transform: translateY(-3px);
-        }
-        .button-secondary {
-          border: 1px solid #e4dfd5;
-          background: #fffdf8;
-        }
-
-        /* FLOATING EMOJI PARCELS */
-        .floating-boxes {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          top: 0;
-          left: 0;
-          perspective: 1000px;
-          pointer-events: none;
-          z-index: 6;
-        }
-        .float-box {
-          position: absolute;
-          width: 150px;
-          height: 150px;
-          transform-style: preserve-3d;
-          will-change: transform;
-          overflow: visible;
-        }
-        .float-a {
-          top: 15%;
-          left: 5%;
-          width: 190px;
-          height: 190px;
-          z-index: 1;
-          cursor: grab;
-          pointer-events: auto;
-          touch-action: none;
         }
         .float-a:active {
           cursor: grabbing;
@@ -1216,69 +1225,8 @@ export default function Home() {
         .float-a canvas {
           pointer-events: none;
         }
-        .hero-box-container {
-          position: absolute;
-          top: 18%;
-          right: clamp(24px, 6vw, 90px);
-          width: min(440px, 35vw);
-          height: min(440px, 35vw);
-          min-width: 260px;
-          min-height: 260px;
-          pointer-events: auto;
-          z-index: 10;
-          user-select: none;
-        }
-        .hero-box-bob {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          animation: gentleHeroBob 24s ease-in-out infinite;
-          will-change: transform;
-        }
-        .hero-box-canvas-wrapper {
-          width: 100%;
-          height: 90%;
-          pointer-events: auto;
-          user-select: none;
-          cursor: grab;
-        }
         .hero-box-canvas-wrapper:active {
           cursor: grabbing;
-        }
-        .hero-box-shadow {
-          width: 58%;
-          height: 20px;
-          border-radius: 50%;
-          background: radial-gradient(ellipse at center, rgba(60, 25, 5, 0.28) 0%, rgba(60, 25, 5, 0) 72%);
-          margin-top: -12px;
-          animation: gentleHeroShadow 24s ease-in-out infinite;
-          will-change: transform, opacity;
-        }
-        /* Stop bobbing when user clicks/holds to pan the box */
-        .hero-box-container:active .hero-box-bob,
-        .hero-box-container:active .hero-box-shadow {
-          animation-play-state: paused !important;
-        }
-        @keyframes gentleHeroBob {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-5px);
-          }
-        }
-        @keyframes gentleHeroShadow {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 0.35;
-          }
-          50% {
-            transform: scale(0.85);
-            opacity: 0.22;
-          }
         }
         .bottom-parcel-overlay {
           position: fixed;
@@ -1307,24 +1255,6 @@ export default function Home() {
           filter: drop-shadow(0 15px 11px #5c351e30);
           pointer-events: none !important;
         }
-        .drop-particles {
-          position: absolute;
-          left: 50%;
-          bottom: 8px;
-          width: 1px;
-          height: 1px;
-        }
-        .drop-particle {
-          position: absolute;
-          width: 9px;
-          height: 3px;
-          border-radius: 999px;
-          background: #ff914d;
-          opacity: 0;
-          transform: translate(-50%, -50%);
-          box-shadow: 0 0 9px #ff914d80;
-        }
-
         .gather-copy,
         .seal-copy,
         .truck-copy,
@@ -1333,205 +1263,9 @@ export default function Home() {
           opacity: 0;
           transform: translateY(50px);
         }
-        .assembled-parcel {
-          position: absolute;
-          width: 210px;
-          height: 190px;
-          top: 48%;
-          left: 65%;
-          opacity: 0;
-          transform: translate(-50%, -50%) scale(0.2) rotate(-15deg);
-          transform-style: preserve-3d;
-          z-index: 3;
-          filter: drop-shadow(0 25px 20px #6b462833);
-        }
-        .parcel-face {
-          position: absolute;
-          inset: 0;
-          background: #c9915e;
-          border: 2px solid #ad794e;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .parcel-flap {
-          position: absolute;
-          width: 50%;
-          height: 35%;
-          top: -30%;
-          background: #e1b17f;
-          border: 2px solid #b98556;
-          z-index: 2;
-          transform-origin: bottom;
-        }
-        .flap-left {
-          left: 0;
-          transform: rotateX(90deg);
-        }
-        .flap-right {
-          right: 0;
-          transform: rotateX(90deg);
-        }
-        .flap-back {
-          width: 100%;
-          left: 0;
-          top: -22%;
-        }
-        .tape-strip {
-          position: absolute;
-          width: 38px;
-          height: 100%;
-          left: 42%;
-          background: #ff914d;
-          transform: scaleX(0);
-          transform-origin: left;
-          z-index: 2;
-        }
-        .shipping-label {
-          position: absolute;
-          width: 95px;
-          height: 78px;
-          padding: 9px;
-          background: #fff9e9;
-          color: #39332c;
-          z-index: 3;
-          transform: scale(0);
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-          font-size: 8px;
-        }
         .shipping-label strong {
           font-family: "Fredoka";
           font-size: 17px;
-        }
-        .barcode {
-          letter-spacing: 2px;
-          font-size: 13px;
-        }
-        .parcel-mark {
-          position: absolute;
-          bottom: 13px;
-          left: 12px;
-          font-size: 8px;
-          letter-spacing: 1px;
-          color: #f9e5ca;
-        }
-
-        /* TRUCK */
-        .truck-scene {
-          position: absolute;
-          inset: 0;
-          opacity: 0;
-          overflow: hidden;
-          background: #f9edda;
-        }
-        .road {
-          position: absolute;
-          bottom: 16%;
-          width: 100%;
-          height: 95px;
-          background: #d9d0c2;
-          border-top: 7px solid #c4b9a9;
-        }
-        .road-line {
-          position: absolute;
-          bottom: calc(16% + 42px);
-          width: 100%;
-          border-top: 4px dashed #fff9ef;
-        }
-        .delivery-truck {
-          position: absolute;
-          bottom: calc(16% + 75px);
-          left: 15%;
-          width: 300px;
-          height: 125px;
-          transform: translateX(-650px);
-        }
-        .truck-box {
-          position: absolute;
-          left: 0;
-          bottom: 0;
-          width: 190px;
-          height: 115px;
-          background: #ff914d;
-          border: 3px solid #e67c39;
-          border-radius: 8px 8px 2px 2px;
-          display: grid;
-          place-items: center;
-          color: white;
-          font-family: "Fredoka";
-          font-size: 34px;
-        }
-        .truck-cabin {
-          position: absolute;
-          width: 105px;
-          height: 80px;
-          bottom: 0;
-          right: 0;
-          background: #e9a36f;
-          border-radius: 20px 20px 3px 3px;
-          border: 3px solid #d18a58;
-        }
-        .truck-window {
-          position: absolute;
-          top: 10px;
-          right: 9px;
-          width: 58px;
-          height: 35px;
-          border-radius: 10px 10px 3px 3px;
-          background: #b7e1f5;
-        }
-        .wheel {
-          position: absolute;
-          bottom: -17px;
-          width: 40px;
-          height: 40px;
-          background: #34332e;
-          border: 7px solid #79766c;
-          border-radius: 50%;
-        }
-        .wheel-one {
-          left: 25px;
-        }
-        .wheel-two {
-          right: 20px;
-        }
-
-        /* AIRPLANE */
-        .sky-scene {
-          position: absolute;
-          inset: 0;
-          opacity: 0;
-          background: linear-gradient(180deg, #b6def3, #f1f7ed);
-          overflow: hidden;
-        }
-        .cloud {
-          position: absolute;
-          color: white;
-          font-size: 170px;
-          opacity: 0.8;
-        }
-        .cloud-one {
-          top: 10%;
-          left: 10%;
-        }
-        .cloud-two {
-          top: 55%;
-          right: 10%;
-          font-size: 230px;
-        }
-        .cloud-three {
-          bottom: 0;
-          left: 40%;
-        }
-        .airplane {
-          position: absolute;
-          top: 42%;
-          left: 36%;
-          color: #ff914d;
-          transform: translateX(-500px);
-          filter: drop-shadow(0 18px 12px #5d91ac33);
         }
         .airplane span {
           position: absolute;
@@ -1543,74 +1277,6 @@ export default function Home() {
           left: 48px;
           transform: rotate(-10deg);
         }
-
-        /* HOUSE */
-        .home-scene {
-          position: absolute;
-          inset: 0;
-          opacity: 0;
-          background: linear-gradient(#c6e6f3 0 72%, #c8dfb3 72%);
-          overflow: hidden;
-        }
-        .sun {
-          position: absolute;
-          right: 17%;
-          top: 12%;
-          width: 90px;
-          height: 90px;
-          background: #ffd68c;
-          border-radius: 50%;
-        }
-        .house {
-          position: absolute;
-          bottom: 17%;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 330px;
-          height: 310px;
-        }
-        .roof {
-          position: absolute;
-          top: 0;
-          left: -30px;
-          width: 390px;
-          height: 170px;
-          background: #d17d57;
-          clip-path: polygon(50% 0, 100% 100%, 0 100%);
-        }
-        .house-body {
-          position: absolute;
-          bottom: 0;
-          left: 15px;
-          width: 300px;
-          height: 205px;
-          background: #fff1d9;
-          border: 4px solid #e6d5b9;
-        }
-        .house-window {
-          position: absolute;
-          top: 40px;
-          left: 27px;
-          width: 65px;
-          height: 70px;
-          background: #a7d9e8;
-          border: 7px solid white;
-          border-radius: 5px;
-        }
-        .window-two {
-          left: auto;
-          right: 27px;
-        }
-        .home-door {
-          position: absolute;
-          bottom: 0;
-          left: 112px;
-          width: 75px;
-          height: 135px;
-          background: #ff914d;
-          border: 5px solid #e8a06c;
-          transform-origin: left;
-        }
         .home-door span {
           position: absolute;
           right: 10px;
@@ -1620,78 +1286,8 @@ export default function Home() {
           background: white;
           border-radius: 50%;
         }
-        .home-ground {
-          position: absolute;
-          width: 100%;
-          bottom: 0;
-          height: 18%;
-          background: #a6c78c;
-        }
-        .home-parcel {
-          position: absolute;
-          bottom: 18%;
-          left: calc(50% + 170px);
-          z-index: 5;
-          filter: drop-shadow(0 12px 10px #71502b33);
-        }
-        .mini-box {
-          width: 100px;
-          height: 85px;
-          background: #c9915e;
-          border: 3px solid #a8734b;
-          display: grid;
-          place-items: center;
-          color: white;
-          font-family: "Fredoka";
-          font-size: 20px;
-        }
-
-        .success-icon {
-          display: inline-grid;
-          place-items: center;
-          background: #e0efd8;
-          color: #669a61;
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          margin-bottom: 20px;
-        }
-        .final-copy {
-          text-align: center;
-          left: 50%;
-          width: 70%;
-          transform: translate(-50%, 50px);
-        }
         .final-copy .button-primary {
           margin-top: 20px;
-        }
-        .scroll-indicator {
-          position: absolute;
-          bottom: 16px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 20;
-          opacity: 1;
-          visibility: visible;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 10px;
-          padding: 9px 14px 7px;
-          border: 1px solid #e5dacc;
-          border-radius: 16px;
-          background: #fff9efeb;
-          box-shadow: 0 8px 24px #8d684514;
-          font-size: 9px;
-          letter-spacing: 2px;
-          color: #898477;
-          pointer-events: none;
-        }
-        .scroll-line {
-          height: 30px;
-          width: 1px;
-          background: var(--orange);
-          animation: scrollPulse 1.5s infinite;
         }
         @keyframes scrollPulse {
           0%,
@@ -1704,61 +1300,12 @@ export default function Home() {
             transform-origin: top;
           }
         }
-
-        /* GENERAL SECTIONS */
-        .section-pad {
-          padding: 120px 9%;
-        }
-        .section-heading {
-          margin-bottom: 55px;
-        }
         .section-heading h2 {
           font-size: clamp(42px, 5vw, 65px);
         }
         .section-heading p {
           color: var(--muted);
           font-size: 14px;
-        }
-        .services {
-          background: #fffdf8;
-        }
-        .service-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 22px;
-        }
-        .service-card {
-          padding: 32px;
-          min-height: 330px;
-          border-radius: 24px;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-        .orange-card {
-          background: #ffeadb;
-        }
-        .blue-card {
-          background: #e0f1fa;
-        }
-        .green-card {
-          background: #e8efd9;
-        }
-        .service-icon {
-          width: 55px;
-          height: 55px;
-          display: grid;
-          place-items: center;
-          background: #ffffff9c;
-          border-radius: 17px;
-          margin-bottom: 24px;
-        }
-        .service-tag {
-          font-size: 9px;
-          font-weight: 800;
-          letter-spacing: 1.5px;
-          color: #817b70;
         }
         .service-card h3 {
           font-family: "Fredoka";
@@ -1779,31 +1326,6 @@ export default function Home() {
           font-weight: 800;
           margin-top: auto;
         }
-        .card-decoration {
-          position: absolute;
-          right: 15px;
-          top: 90px;
-          font-size: 65px;
-          opacity: 0.7;
-          transform: rotate(-15deg);
-        }
-
-        /* TRACKING */
-        .tracking-section {
-          background: #292923;
-          color: white;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          justify-content: center;
-          text-align: center;
-        }
-        .tracking-content {
-          width: 100%;
-          max-width: 700px;
-          position: relative;
-          z-index: 2;
-        }
         .tracking-content .eyebrow {
           color: #c9bfb1;
         }
@@ -1813,24 +1335,6 @@ export default function Home() {
         .tracking-content p {
           color: #c6c2b9;
           font-size: 14px;
-        }
-        .tracking-decoration {
-          position: absolute;
-          font-size: 190px;
-          opacity: 0.08;
-          left: 5%;
-          top: 20%;
-          transform: rotate(-15deg);
-        }
-        .tracking-form {
-          display: flex;
-          align-items: center;
-          background: white;
-          padding: 8px 8px 8px 18px;
-          border-radius: 50px;
-          margin-top: 35px;
-          color: #77746c;
-          gap: 12px;
         }
         .tracking-form input {
           flex: 1;
@@ -1854,35 +1358,6 @@ export default function Home() {
           font-weight: 700;
           white-space: nowrap;
         }
-        .tracking-result {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          margin-top: 18px;
-          font-size: 12px;
-          color: #bde5b3;
-        }
-
-        /* BENEFITS */
-        .why-section {
-          background: var(--cream);
-        }
-        .benefit-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 40px;
-        }
-        .benefit-icon {
-          width: 58px;
-          height: 58px;
-          border-radius: 18px;
-          background: #ffe5d2;
-          color: #dc8048;
-          display: grid;
-          place-items: center;
-          margin-bottom: 20px;
-        }
         .benefit h3 {
           font-family: "Fredoka";
           font-size: 23px;
@@ -1894,25 +1369,9 @@ export default function Home() {
           line-height: 1.8;
           max-width: 250px;
         }
-
-        /* FOOTER */
-        .footer {
-          background: #f0e9dd;
-          padding: 65px 9% 25px;
-        }
-        .footer-main {
-          display: flex;
-          justify-content: space-between;
-          gap: 50px;
-          padding-bottom: 55px;
-        }
         .footer-main p {
           color: var(--muted);
           font-size: 13px;
-        }
-        .footer-links {
-          display: flex;
-          gap: 90px;
         }
         .footer-links div {
           display: flex;
@@ -1927,15 +1386,6 @@ export default function Home() {
           font-size: 12px;
           color: var(--muted);
         }
-        .footer-bottom {
-          padding-top: 22px;
-          border-top: 1px solid #ded6c9;
-          display: flex;
-          justify-content: space-between;
-          font-size: 11px;
-          color: #898477;
-        }
-
         @media (max-width: 768px) {
           .navbar {
             height: 70px;
@@ -2086,7 +1536,6 @@ export default function Home() {
             font-size: 8px;
           }
         }
-
         @media (prefers-reduced-motion: reduce) {
           *,
           *::before,
@@ -2096,6 +1545,121 @@ export default function Home() {
           }
         }
       `}</style>
+      {process.env.NODE_ENV === "development" && (
+        <details
+          style={{
+            position: "fixed",
+            bottom: 16,
+            left: 16,
+            width: "min(340px, calc(100vw - 32px))",
+            zIndex: 1000,
+            color: "#292923",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          <summary
+            style={{
+              width: "fit-content",
+              padding: "10px 14px",
+              borderRadius: 8,
+              background: "#292923",
+              color: "white",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            Rotation tuner
+          </summary>
+          <div
+            style={{
+              display: "grid",
+              gap: 12,
+              marginTop: 8,
+              padding: 14,
+              border: "1px solid #ded6c9",
+              borderRadius: 10,
+              background: "#fff9ef",
+              boxShadow: "0 8px 24px #29292325",
+            }}
+          >
+            <label style={{ display: "grid", gap: 5, fontSize: 12 }}>
+              Box
+              <select
+                value={activeRotationBox}
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
+                  if (value === "floating" || value === "bouncing" || value === "droppable") {
+                    setActiveRotationBox(value);
+                  }
+                }}
+                style={{ padding: 7 }}
+              >
+                <option value="floating">Floating</option>
+                <option value="bouncing">Bouncing</option>
+                <option value="droppable">Droppable</option>
+              </select>
+            </label>
+            {(["x", "y", "z"] as const).map((axis) => (
+              <label
+                key={axis}
+                htmlFor={`rotation-${activeRotationBox}-${axis}`}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 72px",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                {ROTATION_LABELS[axis]}
+                <input
+                  id={`rotation-${activeRotationBox}-${axis}`}
+                  type="number"
+                  min={-180}
+                  max={180}
+                  step={1}
+                  value={boxRotations[activeRotationBox][axis]}
+                  onChange={(event) => updateBoxRotation(axis, Number(event.currentTarget.value))}
+                  style={{ width: "100%", padding: 5 }}
+                />
+                <input
+                  type="range"
+                  min={-180}
+                  max={180}
+                  step={1}
+                  value={boxRotations[activeRotationBox][axis]}
+                  aria-label={`${activeRotationBox} ${axis.toUpperCase()} rotation`}
+                  onChange={(event) => updateBoxRotation(axis, Number(event.currentTarget.value))}
+                  style={{ gridColumn: "1 / -1", width: "100%" }}
+                />
+              </label>
+            ))}
+            <code style={{ fontSize: 11 }}>
+              {JSON.stringify(boxRotations[activeRotationBox])}
+            </code>
+            <button
+              type="button"
+              onClick={() => setBoxRotations(BOX_ROTATIONS)}
+              style={{
+                justifySelf: "start",
+                padding: "6px 9px",
+                border: "1px solid #ded6c9",
+                borderRadius: 6,
+                background: "white",
+                cursor: "pointer",
+                fontSize: 12,
+              }}
+            >
+              Reset rotations
+            </button>
+            <small style={{ fontSize: 11 }}>
+              Copy the shown values into BOX_ROTATIONS to keep them.
+            </small>
+          </div>
+        </details>
+      )}
     </main>
   );
 }

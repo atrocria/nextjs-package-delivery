@@ -1,0 +1,5 @@
+{
+  "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
+  "tailwindCSS.lint.duplicateClassNames": "ignore",
+  "tailwindCSS.lint.conflictingClassNames": "ignore"
+}

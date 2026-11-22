@@ -2,10 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Bounds } from "@react-three/drei";
-import { Suspense } from "react";
 import { ParcelScene } from "@/components/HeroParcel";
-import { ArrowDown, MapPin, Package, Clock, ChevronRight } from "lucide-react";
+import { ArrowDown, ChevronRight } from "lucide-react";
 
 // ─── OpenStreetMap pannable tile renderer ─────────────────────────────────────
 function PannableMapTiles({
@@ -133,8 +131,6 @@ function ParcelCursor({
         style={{ background: "transparent", width: "100%", height: "100%" }}
       >
         <ParcelScene
-          speed={isPanning ? 0 : 0.00012}
-          phase={0}
           motion={isPanning ? "still" : "bob"}
           isPanning={isPanning}
         />
@@ -182,7 +178,7 @@ function DeliveryMap() {
     setIsPanning(true);
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
-    } catch (_) {}
+    } catch {}
   }, [panOffset]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -210,7 +206,7 @@ function DeliveryMap() {
 
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch (_) {}
+    } catch {}
 
     // If it was a click (not a drag pan), drop a pin
     if (!wasMoved && mapRef.current) {
