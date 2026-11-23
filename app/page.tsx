@@ -21,47 +21,195 @@ import gsap from "gsap";
 
 gsap.registerPlugin(ScrollTrigger);
 
-type BoxName = "floating" | "bouncing" | "droppable";
-type RotationAxis = "x" | "y" | "z";
-type BoxRotation = Record<RotationAxis, number>;
-const ROTATION_LABELS: Record<RotationAxis, string> = {
-  x: "X axis - pitch",
-  y: "Y axis - yaw",
-  z: "Z axis - roll",
-};
-
-const BOX_ROTATIONS: Record<BoxName, BoxRotation> = {
+const BOX_ROTATIONS = {
   floating: { x: 0, y: -90, z: 0 },
-  bouncing: { x: 53, y: -71, z: 18 },
+  bouncing: { x: 61, y: -84, z: 16 },
   droppable: { x: 0, y: -90, z: 0 },
 } as const;
+
+const HERO_PARCEL_IDS = ["floating", "float-b", "float-c", "float-d", "float-e", "main"] as const;
+type HeroParcelId = (typeof HERO_PARCEL_IDS)[number];
+type ParcelDebugSettings = {
+  rotationX: number;
+  rotationY: number;
+  rotationZ: number;
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+};
+
+const HERO_PARCEL_LABELS: Record<HeroParcelId, string> = {
+  floating: "Floating parcel",
+  "float-b": "Small parcel B",
+  "float-c": "Small parcel C",
+  "float-d": "Small parcel D",
+  "float-e": "Small parcel E",
+  main: "Main parcel",
+};
+
+const HERO_PARCEL_POSITIONS: Record<
+  HeroParcelId,
+  { top: string; horizontal: string; side: "left" | "right" }
+> = {
+  floating: {
+    top: "--floating-parcel-top",
+    horizontal: "--floating-parcel-left",
+    side: "left",
+  },
+  "float-b": {
+    top: "--floating-parcel-b-top",
+    horizontal: "--floating-parcel-b-left",
+    side: "left",
+  },
+  "float-c": {
+    top: "--floating-parcel-c-top",
+    horizontal: "--floating-parcel-c-left",
+    side: "left",
+  },
+  "float-d": {
+    top: "--floating-parcel-d-top",
+    horizontal: "--floating-parcel-d-left",
+    side: "left",
+  },
+  "float-e": {
+    top: "--floating-parcel-e-top",
+    horizontal: "--floating-parcel-e-right",
+    side: "right",
+  },
+  main: {
+    top: "--hero-parcel-top",
+    horizontal: "--hero-parcel-right",
+    side: "right",
+  },
+};
+
+const INITIAL_HERO_PARCELS: Record<HeroParcelId, ParcelDebugSettings> = {
+  floating: {
+    rotationX: BOX_ROTATIONS.floating.x,
+    rotationY: BOX_ROTATIONS.floating.y,
+    rotationZ: BOX_ROTATIONS.floating.z,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+  },
+  "float-b": {
+    rotationX: 18,
+    rotationY: -42,
+    rotationZ: 12,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+  },
+  "float-c": {
+    rotationX: -12,
+    rotationY: 35,
+    rotationZ: -8,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+  },
+  "float-d": {
+    rotationX: 28,
+    rotationY: -68,
+    rotationZ: 4,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+  },
+  "float-e": {
+    rotationX: -22,
+    rotationY: 64,
+    rotationZ: -14,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+  },
+  main: {
+    rotationX: BOX_ROTATIONS.bouncing.x,
+    rotationY: BOX_ROTATIONS.bouncing.y,
+    rotationZ: BOX_ROTATIONS.bouncing.z,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+  },
+};
+
+const PARCEL_DEBUG_FIELDS: {
+  field: keyof ParcelDebugSettings;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+}[] = [
+  { field: "rotationX", label: "Rotation X", min: -180, max: 180, step: 1, unit: "°" },
+  { field: "rotationY", label: "Rotation Y", min: -180, max: 180, step: 1, unit: "°" },
+  { field: "rotationZ", label: "Rotation Z", min: -180, max: 180, step: 1, unit: "°" },
+  { field: "scale", label: "Scale", min: 0.25, max: 2.5, step: 0.05, unit: "×" },
+  { field: "offsetX", label: "Horizontal position", min: -50, max: 50, step: 1, unit: "%" },
+  { field: "offsetY", label: "Vertical position", min: -50, max: 50, step: 1, unit: "%" },
+];
+
+const RETURN_TO_HERO_SESSION_KEY = "plop-return-to-hero";
+
+function restoreHeroAfterShipping() {
+  if (typeof window === "undefined") return;
+  if (sessionStorage.getItem(RETURN_TO_HERO_SESSION_KEY) !== "true") {
+    window.history.scrollRestoration = "auto";
+    return;
+  }
+
+  sessionStorage.removeItem(RETURN_TO_HERO_SESSION_KEY);
+  window.history.scrollRestoration = "manual";
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${window.location.pathname}${window.location.search}`,
+  );
+  window.scrollTo(0, 0);
+  window.location.reload();
+}
+
+if (typeof window !== "undefined") {
+  if (sessionStorage.getItem(RETURN_TO_HERO_SESSION_KEY) !== "true") {
+    window.history.scrollRestoration = "auto";
+  }
+  window.addEventListener("pageshow", restoreHeroAfterShipping);
+  window.addEventListener("popstate", restoreHeroAfterShipping);
+}
+
+function getParcelPlacementStyle(id: HeroParcelId, settings: ParcelDebugSettings) {
+  const position = HERO_PARCEL_POSITIONS[id];
+  const top = `calc(var(${position.top}) + ${settings.offsetY}%)`;
+  const horizontal = `calc(var(${position.horizontal}) ${position.side === "left" ? "+" : "-"} ${settings.offsetX}%)`;
+
+  if (position.side === "left") {
+    return { top, left: horizontal, transform: `scale(${settings.scale})` };
+  }
+
+  return { top, right: horizontal };
+}
 
 export default function Home() {
   const journeyRef = useRef<HTMLElement>(null);
   const bottomParcelRef = useRef<HTMLDivElement>(null);
   const bottomParcelDropTimer = useRef<number | null>(null);
   const hasDroppedBottomParcel = useRef(false);
-  const parcelDragRef = useRef<{
-    offsetX: number;
-    offsetY: number;
-    pointerId: number;
-  } | null>(null);
   const [tracking, setTracking] = useState("");
   const [trackingResult, setTrackingResult] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [gravityBoxPos, setGravityBoxPos] = useState<{ x: number; y: number } | null>(null);
   const [isGravityDragging, setIsGravityDragging] = useState(false);
-  const [boxRotations, setBoxRotations] = useState(BOX_ROTATIONS);
-  const [activeRotationBox, setActiveRotationBox] = useState<BoxName>("floating");
+  const [heroParcelSettings, setHeroParcelSettings] = useState(INITIAL_HERO_PARCELS);
+  const [activeHeroParcel, setActiveHeroParcel] = useState<HeroParcelId>("floating");
   const gravityDragRef = useRef<{ offsetX: number; offsetY: number; pointerId: number } | null>(null);
 
-  function updateBoxRotation(axis: RotationAxis, value: number) {
-    const degrees = Math.max(-180, Math.min(180, value));
-    setBoxRotations((current) => ({
+  function updateActiveParcelSetting(field: keyof ParcelDebugSettings, value: number) {
+    setHeroParcelSettings((current) => ({
       ...current,
-      [activeRotationBox]: {
-        ...current[activeRotationBox],
-        [axis]: degrees,
+      [activeHeroParcel]: {
+        ...current[activeHeroParcel],
+        [field]: value,
       },
     }));
   }
@@ -82,21 +230,6 @@ export default function Home() {
           invalidateOnRefresh: true,
         },
       });
-
-      // 1. Floating boxes gather together
-      tl.to(
-        ".float-a",
-        {
-          x: 180,
-          y: 160,
-          rotation: 0,
-          scale: 0.8,
-          duration: 2,
-        },
-        0,
-      );
-
-
       tl.to(
         ".hero-copy",
         {
@@ -138,16 +271,6 @@ export default function Home() {
       );
 
       // 2. Assemble the parcel
-      tl.to(
-        ".floating-boxes",
-        {
-          opacity: 0,
-          scale: 0.3,
-          duration: 1,
-        },
-        2,
-      );
-
       tl.to(
         ".assembled-parcel",
         {
@@ -488,46 +611,6 @@ export default function Home() {
     if (tracking.trim()) setTrackingResult(true);
   }
 
-  function handleParcelDragStart(e: React.PointerEvent<HTMLDivElement>) {
-    const section = journeyRef.current;
-    if (!section) return;
-
-    const parcelBounds = e.currentTarget.getBoundingClientRect();
-    parcelDragRef.current = {
-      offsetX: e.clientX - parcelBounds.left,
-      offsetY: e.clientY - parcelBounds.top,
-      pointerId: e.pointerId,
-    };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  }
-
-  function handleParcelDragMove(e: React.PointerEvent<HTMLDivElement>) {
-    const drag = parcelDragRef.current;
-    const section = journeyRef.current;
-    if (!drag || drag.pointerId !== e.pointerId || !section) return;
-
-    const sectionBounds = section.getBoundingClientRect();
-    const parcelBounds = e.currentTarget.getBoundingClientRect();
-    const left = Math.min(
-      Math.max(0, e.clientX - sectionBounds.left - drag.offsetX),
-      sectionBounds.width - parcelBounds.width,
-    );
-    const top = Math.min(
-      Math.max(0, e.clientY - sectionBounds.top - drag.offsetY),
-      sectionBounds.height - parcelBounds.height,
-    );
-
-    e.currentTarget.style.left = `${(left / sectionBounds.width) * 100}%`;
-    e.currentTarget.style.top = `${(top / sectionBounds.height) * 100}%`;
-  }
-
-  function handleParcelDragEnd(e: React.PointerEvent<HTMLDivElement>) {
-    if (parcelDragRef.current?.pointerId !== e.pointerId) return;
-
-    parcelDragRef.current = null;
-    e.currentTarget.releasePointerCapture(e.pointerId);
-  }
-
   function handleGravityBoxDragStart(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0) return;
     const box = e.currentTarget;
@@ -629,7 +712,10 @@ export default function Home() {
           plop<span>.</span>
         </a>
 
-        <div className={`nav-links ${menuOpen ? "open" : ""}`}>
+        <div
+          id="primary-navigation"
+          className={`nav-links ${menuOpen ? "open" : ""}`}
+        >
           <a href="#services" onClick={() => setMenuOpen(false)}>
             Services
           </a>
@@ -641,23 +727,12 @@ export default function Home() {
           </a>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <a
-            href="/login"
-            className="nav-cta [background:var(--dark)] [color:white] [padding:13px_20px] [border-radius:30px] [font-size:13px] [display:flex] [align-items:center] [gap:10px]"
-            style={{
-              background: "transparent",
-              color: "var(--dark)",
-              border: "1.5px solid #e4dfd5",
-            }}
-          >
+        <div className="nav-actions">
+          <a href="/login" className="nav-cta nav-sign-in">
             Sign in
           </a>
-          <a
-            href="/register"
-            className="nav-cta [background:var(--dark)] [color:white] [padding:13px_20px] [border-radius:30px] [font-size:13px] [display:flex] [align-items:center] [gap:10px]"
-          >
-            Register <ArrowUpRight size={17} />
+          <a href="/register" className="nav-cta nav-get-started">
+            Get started <ArrowUpRight size={17} />
           </a>
         </div>
 
@@ -665,6 +740,8 @@ export default function Home() {
           className="mobile-menu [display:none]"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle navigation"
+          aria-expanded={menuOpen}
+          aria-controls="primary-navigation"
         >
           <Menu />
         </button>
@@ -703,7 +780,8 @@ export default function Home() {
 
           <div className="hero-actions [display:flex] [gap:12px] [flex-wrap:wrap]">
             <a
-              href="#tracking"
+              href="/shipping"
+              onClick={() => sessionStorage.setItem(RETURN_TO_HERO_SESSION_KEY, "true")}
               className="button-primary [background:var(--orange)] [color:white] [box-shadow:0_8px_22px_#ff914d33]"
             >
               Send a parcel <ArrowRight size={18} />
@@ -718,35 +796,86 @@ export default function Home() {
         </div>
 
         {/* FLOATING PARCELS */}
-        <div className="floating-boxes [position:absolute] [width:100%] [height:100%] [top:0] [left:0] [perspective:1000px] [pointer-events:none] [z-index:6]">
+        <div className="floating-boxes [position:absolute] [width:100%] [height:100%] [top:0] [left:0] [pointer-events:none] [z-index:6]">
           <div
-            className="float-box float-a [position:absolute] [width:190px] [height:190px] [transform-style:preserve-3d] [will-change:transform] [overflow:visible] [top:15%] [left:5%] [z-index:1] [cursor:grab] [pointer-events:auto] [touch-action:none]"
-            onPointerDown={handleParcelDragStart}
-            onPointerMove={handleParcelDragMove}
-            onPointerUp={handleParcelDragEnd}
-            onPointerCancel={handleParcelDragEnd}
+            className="float-box float-a [position:absolute] [width:190px] [height:190px] [overflow:visible] [z-index:1]"
+            style={getParcelPlacementStyle("floating", heroParcelSettings.floating)}
           >
             <HeroParcel
-              motionSpeed={0.2}
               motion="logo-tour"
-              rotationXDegrees={boxRotations.floating.x}
-              rotationYDegrees={boxRotations.floating.y}
-              rotationZDegrees={boxRotations.floating.z}
+              motionSpeed={0.2}
+              rotationXDegrees={heroParcelSettings.floating.rotationX}
+              rotationYDegrees={heroParcelSettings.floating.rotationY}
+              rotationZDegrees={heroParcelSettings.floating.rotationZ}
+            />
+          </div>
+          <div
+            className="decorative-parcel float-b"
+            style={getParcelPlacementStyle("float-b", heroParcelSettings["float-b"])}
+            aria-hidden="true"
+          >
+            <HeroParcel
+              motion="bob"
+              rotationXDegrees={heroParcelSettings["float-b"].rotationX}
+              rotationYDegrees={heroParcelSettings["float-b"].rotationY}
+              rotationZDegrees={heroParcelSettings["float-b"].rotationZ}
+            />
+          </div>
+          <div
+            className="decorative-parcel float-c"
+            style={getParcelPlacementStyle("float-c", heroParcelSettings["float-c"])}
+            aria-hidden="true"
+          >
+            <HeroParcel
+              motion="bob"
+              rotationXDegrees={heroParcelSettings["float-c"].rotationX}
+              rotationYDegrees={heroParcelSettings["float-c"].rotationY}
+              rotationZDegrees={heroParcelSettings["float-c"].rotationZ}
+            />
+          </div>
+          <div
+            className="decorative-parcel float-d"
+            style={getParcelPlacementStyle("float-d", heroParcelSettings["float-d"])}
+            aria-hidden="true"
+          >
+            <HeroParcel
+              motion="bob"
+              rotationXDegrees={heroParcelSettings["float-d"].rotationX}
+              rotationYDegrees={heroParcelSettings["float-d"].rotationY}
+              rotationZDegrees={heroParcelSettings["float-d"].rotationZ}
+            />
+          </div>
+          <div
+            className="decorative-parcel float-e"
+            style={getParcelPlacementStyle("float-e", heroParcelSettings["float-e"])}
+            aria-hidden="true"
+          >
+            <HeroParcel
+              motion="bob"
+              rotationXDegrees={heroParcelSettings["float-e"].rotationX}
+              rotationYDegrees={heroParcelSettings["float-e"].rotationY}
+              rotationZDegrees={heroParcelSettings["float-e"].rotationZ}
             />
           </div>
         </div>
 
         {/* HERO MAIN PARCEL (3D & PANNABLE) */}
-        <div className="hero-box-container [position:absolute] [top:18%] [right:clamp(24px,_6vw,_90px)] [width:min(440px,_35vw)] [height:min(440px,_35vw)] [min-width:260px] [min-height:260px] [pointer-events:auto] [z-index:10] [user-select:none]">
-          <div className="hero-box-layout [width:100%] [height:100%] [display:flex] [flex-direction:column] [align-items:center] [justify-content:center]">
+        <div
+          className="hero-box-container [position:absolute] [width:min(600px,_45vw)] [height:min(600px,_55vw)] [min-width:260px] [min-height:260px] [pointer-events:auto] [z-index:10] [user-select:none]"
+          style={getParcelPlacementStyle("main", heroParcelSettings.main)}
+        >
+          <div
+            className="hero-box-layout [width:100%] [height:100%] [display:flex] [flex-direction:column] [align-items:center] [justify-content:center]"
+            style={{ transform: `scale(${heroParcelSettings.main.scale})` }}
+          >
             <div className="hero-box-canvas-wrapper [width:100%] [height:90%] [pointer-events:auto] [user-select:none] [cursor:grab]">
               <HeroParcel
                 interactive
                 motion="bob"
                 quarterView
-                rotationXDegrees={boxRotations.bouncing.x}
-                rotationYDegrees={boxRotations.bouncing.y}
-                rotationZDegrees={boxRotations.bouncing.z}
+                rotationXDegrees={heroParcelSettings.main.rotationX}
+                rotationYDegrees={heroParcelSettings.main.rotationY}
+                rotationZDegrees={heroParcelSettings.main.rotationZ}
               />
             </div>
             <div className="hero-box-shadow [width:58%] [height:20px] [border-radius:50%] [background:radial-gradient(ellipse_at_center,_rgba(60,_25,_5,_0.28)_0%,_rgba(60,_25,_5,_0)_72%)] [margin-top:-12px] [opacity:0.35]" />
@@ -895,9 +1024,11 @@ export default function Home() {
           </a>
         </div>
 
-        <div className="scroll-indicator [position:absolute] [bottom:16px] [left:50%] [transform:translateX(-50%)] [z-index:20] [opacity:1] [visibility:visible] [display:flex] [flex-direction:column] [align-items:center] [gap:10px] [padding:9px_14px_7px] [border:1px_solid_#e5dacc] [border-radius:16px] [background:#fff9efeb] [box-shadow:0_8px_24px_#8d684514] [font-size:9px] [letter-spacing:2px] [color:#898477] [pointer-events:none]">
+        <div className="scroll-indicator [position:absolute] [bottom:16px] [left:50%] [transform:translateX(-50%)] [z-index:20] [opacity:1] [visibility:visible] [display:flex] [flex-direction:column] [align-items:center] [gap:3px] [font-size:9px] [letter-spacing:2px] [color:#898477] [pointer-events:none]">
           <span>SCROLL TO FOLLOW THE JOURNEY</span>
-          <div className="scroll-line [height:30px] [width:1px] [background:var(--orange)] [animation:scrollPulse_1.5s_infinite]" />
+          <span className="scroll-chevron" aria-hidden="true">
+            ⮟
+          </span>
         </div>
       </section>
 
@@ -927,9 +1058,9 @@ export default function Home() {
           <HeroParcel
             motion="still"
             quarterView
-            rotationXDegrees={boxRotations.droppable.x}
-            rotationYDegrees={boxRotations.droppable.y}
-            rotationZDegrees={boxRotations.droppable.z}
+            rotationXDegrees={BOX_ROTATIONS.droppable.x}
+            rotationYDegrees={BOX_ROTATIONS.droppable.y}
+            rotationZDegrees={BOX_ROTATIONS.droppable.z}
           />
         </div>
         <div className="drop-particles [position:absolute] [left:50%] [bottom:8px] [width:1px] [height:1px]">
@@ -1175,8 +1306,97 @@ export default function Home() {
         .logo span {
           color: var(--orange);
         }
+        .journey {
+          --floating-parcel-top: 15%;
+          --floating-parcel-left: 5%;
+          --floating-parcel-b-top: 8%;
+          --floating-parcel-b-left: 46%;
+          --floating-parcel-c-top: 68%;
+          --floating-parcel-c-left: 3%;
+          --floating-parcel-d-top: 73%;
+          --floating-parcel-d-left: 56%;
+          --floating-parcel-e-top: 12%;
+          --floating-parcel-e-right: 8%;
+          --hero-parcel-top: 18%;
+          --hero-parcel-right: clamp(24px, 6vw, 90px);
+        }
+        .float-a {
+          top: var(--floating-parcel-top);
+          left: var(--floating-parcel-left);
+        }
+        .decorative-parcel {
+          position: absolute;
+          z-index: 1;
+          pointer-events: none;
+        }
+        .float-b {
+          top: var(--floating-parcel-b-top);
+          left: var(--floating-parcel-b-left);
+          width: 124px;
+          height: 124px;
+        }
+        .float-c {
+          top: var(--floating-parcel-c-top);
+          left: var(--floating-parcel-c-left);
+          width: 88px;
+          height: 88px;
+        }
+        .float-d {
+          top: var(--floating-parcel-d-top);
+          left: var(--floating-parcel-d-left);
+          width: 112px;
+          height: 112px;
+        }
+        .float-e {
+          top: var(--floating-parcel-e-top);
+          right: var(--floating-parcel-e-right);
+          width: 76px;
+          height: 76px;
+        }
+        .hero-box-container {
+          top: var(--hero-parcel-top);
+          right: var(--hero-parcel-right);
+        }
+        .nav-links {
+          display: flex;
+          align-items: center;
+          gap: 32px;
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 600;
+        }
         .nav-links a:hover {
           color: var(--orange);
+        }
+        .nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .nav-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 13px 20px;
+          border: 1.5px solid transparent;
+          border-radius: 30px;
+          font-size: 13px;
+          font-weight: 700;
+          white-space: nowrap;
+          transition:
+            background 0.2s,
+            color 0.2s,
+            border-color 0.2s;
+        }
+        .nav-sign-in {
+          border-color: #e4dfd5;
+        }
+        .nav-get-started {
+          background: var(--dark);
+          color: white;
+        }
+        .nav-get-started:hover {
+          background: #171717;
         }
         .hero-copy h1,
         .scene-copy h2,
@@ -1262,6 +1482,7 @@ export default function Home() {
         .final-copy {
           opacity: 0;
           transform: translateY(50px);
+          pointer-events: none;
         }
         .shipping-label strong {
           font-family: "Fredoka";
@@ -1288,17 +1509,12 @@ export default function Home() {
         }
         .final-copy .button-primary {
           margin-top: 20px;
+          pointer-events: auto;
         }
-        @keyframes scrollPulse {
-          0%,
-          100% {
-            transform: scaleY(0.4);
-            transform-origin: top;
-          }
-          50% {
-            transform: scaleY(1);
-            transform-origin: top;
-          }
+        .scroll-chevron {
+          color: var(--orange);
+          font-size: 24px;
+          line-height: 1;
         }
         .section-heading h2 {
           font-size: clamp(42px, 5vw, 65px);
@@ -1395,14 +1611,20 @@ export default function Home() {
             font-size: 32px;
           }
           .nav-cta {
-            margin-left: auto;
-            margin-right: 15px;
             padding: 11px 15px;
+          }
+          .nav-actions {
+            margin-left: auto;
+            margin-right: 12px;
+          }
+          .nav-sign-in {
+            display: none;
           }
           .mobile-menu {
             display: block;
             border: none;
             background: transparent;
+            padding: 6px;
           }
           .nav-links {
             display: none;
@@ -1413,7 +1635,10 @@ export default function Home() {
             padding: 25px;
             background: white;
             flex-direction: column;
+            align-items: flex-start;
             gap: 22px;
+            box-shadow: 0 12px 20px #29292312;
+            z-index: 20;
           }
           .nav-links.open {
             display: flex;
@@ -1442,13 +1667,23 @@ export default function Home() {
             font-size: 11px;
           }
           .float-a {
-            top: 11%;
-            left: 3%;
             right: auto;
           }
+          .journey {
+            --floating-parcel-top: 11%;
+            --floating-parcel-left: 3%;
+            --floating-parcel-b-top: 5%;
+            --floating-parcel-b-left: 70%;
+            --floating-parcel-c-top: 73%;
+            --floating-parcel-c-left: 3%;
+            --floating-parcel-d-top: 82%;
+            --floating-parcel-d-left: 58%;
+            --floating-parcel-e-top: 19%;
+            --floating-parcel-e-right: 8%;
+            --hero-parcel-top: 52%;
+            --hero-parcel-right: 5%;
+          }
           .hero-box-container {
-            top: 52%;
-            right: 5%;
             width: 220px;
             height: 220px;
             min-width: 0;
@@ -1551,7 +1786,7 @@ export default function Home() {
             position: "fixed",
             bottom: 16,
             left: 16,
-            width: "min(340px, calc(100vw - 32px))",
+            width: "min(360px, calc(100vw - 32px))",
             zIndex: 1000,
             color: "#292923",
             fontFamily: "Arial, sans-serif",
@@ -1569,12 +1804,14 @@ export default function Home() {
               fontWeight: 700,
             }}
           >
-            Rotation tuner
+            Hero parcel debug
           </summary>
           <div
             style={{
               display: "grid",
-              gap: 12,
+              gap: 10,
+              maxHeight: "min(70vh, 560px)",
+              overflowY: "auto",
               marginTop: 8,
               padding: 14,
               border: "1px solid #ded6c9",
@@ -1583,65 +1820,54 @@ export default function Home() {
               boxShadow: "0 8px 24px #29292325",
             }}
           >
-            <label style={{ display: "grid", gap: 5, fontSize: 12 }}>
-              Box
+            <label style={{ display: "grid", gap: 5, fontSize: 12, fontWeight: 600 }}>
+              Parcel
               <select
-                value={activeRotationBox}
+                value={activeHeroParcel}
                 onChange={(event) => {
-                  const value = event.currentTarget.value;
-                  if (value === "floating" || value === "bouncing" || value === "droppable") {
-                    setActiveRotationBox(value);
-                  }
+                  const parcel = HERO_PARCEL_IDS.find(
+                    (id) => id === event.currentTarget.value,
+                  );
+                  if (parcel) setActiveHeroParcel(parcel);
                 }}
                 style={{ padding: 7 }}
               >
-                <option value="floating">Floating</option>
-                <option value="bouncing">Bouncing</option>
-                <option value="droppable">Droppable</option>
+                {HERO_PARCEL_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {HERO_PARCEL_LABELS[id]}
+                  </option>
+                ))}
               </select>
             </label>
-            {(["x", "y", "z"] as const).map((axis) => (
+            {PARCEL_DEBUG_FIELDS.map(({ field, label, min, max, step, unit }) => (
               <label
-                key={axis}
-                htmlFor={`rotation-${activeRotationBox}-${axis}`}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 72px",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 12,
-                  fontWeight: 600,
-                }}
+                key={field}
+                style={{ display: "grid", gap: 4, fontSize: 12, fontWeight: 600 }}
               >
-                {ROTATION_LABELS[axis]}
-                <input
-                  id={`rotation-${activeRotationBox}-${axis}`}
-                  type="number"
-                  min={-180}
-                  max={180}
-                  step={1}
-                  value={boxRotations[activeRotationBox][axis]}
-                  onChange={(event) => updateBoxRotation(axis, Number(event.currentTarget.value))}
-                  style={{ width: "100%", padding: 5 }}
-                />
+                <span>
+                  {label}: {heroParcelSettings[activeHeroParcel][field]}
+                  {unit}
+                </span>
                 <input
                   type="range"
-                  min={-180}
-                  max={180}
-                  step={1}
-                  value={boxRotations[activeRotationBox][axis]}
-                  aria-label={`${activeRotationBox} ${axis.toUpperCase()} rotation`}
-                  onChange={(event) => updateBoxRotation(axis, Number(event.currentTarget.value))}
-                  style={{ gridColumn: "1 / -1", width: "100%" }}
+                  min={min}
+                  max={max}
+                  step={step}
+                  value={heroParcelSettings[activeHeroParcel][field]}
+                  onChange={(event) =>
+                    updateActiveParcelSetting(field, event.currentTarget.valueAsNumber)
+                  }
                 />
               </label>
             ))}
-            <code style={{ fontSize: 11 }}>
-              {JSON.stringify(boxRotations[activeRotationBox])}
-            </code>
             <button
               type="button"
-              onClick={() => setBoxRotations(BOX_ROTATIONS)}
+              onClick={() =>
+                setHeroParcelSettings((current) => ({
+                  ...current,
+                  [activeHeroParcel]: { ...INITIAL_HERO_PARCELS[activeHeroParcel] },
+                }))
+              }
               style={{
                 justifySelf: "start",
                 padding: "6px 9px",
@@ -1652,10 +1878,10 @@ export default function Home() {
                 fontSize: 12,
               }}
             >
-              Reset rotations
+              Reset this parcel
             </button>
             <small style={{ fontSize: 11 }}>
-              Copy the shown values into BOX_ROTATIONS to keep them.
+              Position controls offset from the parcel&apos;s responsive default position.
             </small>
           </div>
         </details>

@@ -43,7 +43,9 @@ export default function LoginPage() {
           --muted: #77746c;
         }
         .auth-page {
-          min-height: 100vh;
+          min-height: calc(100vh - var(--navbar-height, 76px));
+          min-height: calc(100dvh - var(--navbar-height, 76px));
+          box-sizing: border-box;
           background: var(--cream);
           display: flex;
           align-items: center;

@@ -12,10 +12,10 @@ export default function Navbar() {
   }
 
   return (
-    <header className="bg-[#e9eef4] px-4 pt-4 sm:px-7 sm:pt-7">
+    <header className="bg-[var(--background)] px-4 pt-4 sm:px-7 sm:pt-7">
       <nav
         aria-label="Main navigation"
-        className="mx-auto flex max-w-7xl items-center justify-between rounded-3xl bg-white px-4 py-3 shadow-sm sm:px-6"
+        className="mx-auto flex max-w-7xl items-center justify-between rounded-3xl bg-[var(--background)] px-4 py-3 sm:px-6"
       >
         <Link
           className="flex items-center gap-3 font-bold tracking-tight text-slate-950"

@@ -115,7 +115,7 @@ function ParcelOrbitControls({ parcelRef }: { parcelRef: RefObject<Group | null>
   return (
     <OrbitControls
       enablePan
-      enableZoom
+      enableZoom={false}
       enableRotate
       enableDamping
       dampingFactor={0.08}
