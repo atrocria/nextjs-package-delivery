@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { updateSession } from "@/utils/supabase/proxy";
+import { hasSupabaseConfig } from "@/utils/supabase/config";
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  if (!hasSupabaseConfig()) {
+    return NextResponse.next();
+  }
 
   // Public pages
   const publicRoutes = [

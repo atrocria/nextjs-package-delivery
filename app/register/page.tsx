@@ -44,18 +44,27 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email: form.email.trim(),
-      password: form.password,
-      options: {
-        data: {
-          full_name: form.fullName.trim(),
-          phone: form.phone.trim(),
-          address: form.address.trim(),
+    let error;
+    try {
+      const supabase = createClient();
+      const result = await supabase.auth.signUp({
+        email: form.email.trim(),
+        password: form.password,
+        options: {
+          data: {
+            full_name: form.fullName.trim(),
+            phone: form.phone.trim(),
+            address: form.address.trim(),
+          },
         },
-      },
-    });
+      });
+      error = result.error;
+    } catch (caughtError) {
+      error =
+        caughtError instanceof Error
+          ? caughtError
+          : new Error("Unable to connect to Supabase.");
+    }
 
     setIsSubmitting(false);
 

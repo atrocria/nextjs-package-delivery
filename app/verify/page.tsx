@@ -1,6 +1,19 @@
 import { createClient } from "@/utils/supabase/server";
+import { hasSupabaseConfig } from "@/utils/supabase/config";
 
 export default async function DatabaseTest() {
+  if (!hasSupabaseConfig()) {
+    return (
+      <main>
+        <h1>Supabase configuration required</h1>
+        <p>
+          Set NEXT_PUBLIC_SUPABASE_URL and
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in a local .env file.
+        </p>
+      </main>
+    );
+  }
+
   const supabase = await createClient();
 
   const { data, error } = await supabase

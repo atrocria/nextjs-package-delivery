@@ -3,15 +3,28 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Center, OrbitControls, useGLTF } from "@react-three/drei";
 import { Suspense, useMemo, useRef, type RefObject } from "react";
-import { BackSide, Mesh, MeshBasicMaterial, Quaternion, Vector3, type Group } from "three";
+import {
+  BackSide,
+  Box3,
+  Mesh,
+  MeshBasicMaterial,
+  Quaternion,
+  Vector3,
+  type Group,
+} from "three";
 
 type HeroParcelProps = {
   interactive?: boolean;
+  enableZoom?: boolean;
+  dropStartRotation?: { x: number; y: number; z: number };
+  dropElapsedRef?: { current: number };
+  dropDelaySeconds?: number;
+  dropDurationSeconds?: number;
   motionSpeed?: number;
   rotationXDegrees?: number;
   rotationYDegrees?: number;
   rotationZDegrees?: number;
-  motion?: "logo-tour" | "free-spin" | "still" | "bob";
+  motion?: "logo-tour" | "free-spin" | "still" | "bob" | "drop";
   view?: "perspective" | "top";
   quarterView?: boolean;
   isPanning?: boolean;
@@ -20,6 +33,10 @@ type HeroParcelProps = {
 function Parcel({
   parcelRef,
   motionSpeed = 1,
+  dropStartRotation = { x: 0, y: 0, z: 0 },
+  dropElapsedRef,
+  dropDelaySeconds = 0.42,
+  dropDurationSeconds = 0.52,
   rotationXDegrees = 0,
   rotationYDegrees = 0,
   rotationZDegrees = 0,
@@ -56,6 +73,34 @@ function Parcel({
 
   useFrame(({ clock }) => {
     if (!parcelRef.current) return;
+
+    if (motion === "drop") {
+      const dropElapsed = dropElapsedRef?.current ?? 0;
+      const startX = (dropStartRotation.x * Math.PI) / 180;
+      const startY = (dropStartRotation.y * Math.PI) / 180;
+      const startZ = (dropStartRotation.z * Math.PI) / 180;
+      const targetX = (rotationXDegrees * Math.PI) / 180;
+      const targetY = (rotationYDegrees * Math.PI) / 180;
+      const targetZ = (rotationZDegrees * Math.PI) / 180;
+      const progress = Math.min(
+        1,
+        Math.max(0, (dropElapsed - dropDelaySeconds) / dropDurationSeconds),
+      );
+      const easedProgress = progress * progress;
+      const impactElapsed = dropElapsed - dropDelaySeconds - dropDurationSeconds;
+      const wobble =
+        impactElapsed >= 0 && impactElapsed < 0.3
+          ? Math.sin(impactElapsed * 52) * Math.exp(-impactElapsed * 17)
+          : 0;
+
+      parcelRef.current.position.y = 0;
+      parcelRef.current.rotation.set(
+        startX + (targetX - startX) * easedProgress + wobble * 0.025,
+        startY + (targetY - startY) * easedProgress + wobble * 0.018,
+        startZ + (targetZ - startZ) * easedProgress + wobble * 0.07,
+      );
+      return;
+    }
 
     if (isPanning) {
       parcelRef.current.position.y = 0;
@@ -98,7 +143,128 @@ function Parcel({
   return <primitive ref={parcelRef} object={model} />;
 }
 
-function ParcelOrbitControls({ parcelRef }: { parcelRef: RefObject<Group | null> }) {
+type FloatingParcelConfig = {
+  anchorRef: RefObject<HTMLDivElement | null>;
+  motion: "logo-tour" | "bob";
+  motionSpeed?: number;
+  rotationXDegrees: number;
+  rotationYDegrees: number;
+  rotationZDegrees: number;
+};
+
+function FloatingParcel({ config }: { config: FloatingParcelConfig }) {
+  const rootRef = useRef<Group | null>(null);
+  const parcelRef = useRef<Group | null>(null);
+  const bounds = useMemo(() => new Box3(), []);
+  const dimensions = useMemo(() => new Vector3(), []);
+  const measured = useRef(false);
+  const { gl, size } = useThree();
+
+  useFrame(({ clock }) => {
+    const root = rootRef.current;
+    const parcel = parcelRef.current;
+    const anchor = config.anchorRef.current;
+    if (!root || !parcel || !anchor) return;
+
+    const canvasBounds = gl.domElement.getBoundingClientRect();
+    const anchorBounds = anchor.getBoundingClientRect();
+    root.position.set(
+      anchorBounds.left + anchorBounds.width / 2 - canvasBounds.left - size.width / 2,
+      size.height / 2 - (anchorBounds.top + anchorBounds.height / 2 - canvasBounds.top),
+      0,
+    );
+
+    if (!measured.current) {
+      parcel.updateWorldMatrix(true, true);
+      bounds.setFromObject(parcel);
+      bounds.getSize(dimensions);
+      if (dimensions.x > 0 && dimensions.y > 0) {
+        root.scale.setScalar(
+          (Math.min(anchorBounds.width / dimensions.x, anchorBounds.height / dimensions.y) *
+            0.72),
+        );
+        measured.current = true;
+      }
+    }
+
+    const elapsed = clock.elapsedTime * (config.motionSpeed ?? 1);
+    const rotationX = (config.rotationXDegrees * Math.PI) / 180;
+    const rotationY = (config.rotationYDegrees * Math.PI) / 180;
+    const rotationZ = (config.rotationZDegrees * Math.PI) / 180;
+    const isLogoTour = config.motion === "logo-tour";
+    parcel.position.y = Math.sin(elapsed) * 0.045;
+    parcel.rotation.set(
+      isLogoTour
+        ? rotationX - 0.04 + Math.sin(elapsed * 0.35) * 0.025
+        : rotationX,
+      isLogoTour
+        ? rotationY + Math.sin(elapsed * 0.72) * (Math.PI / 2.65)
+        : rotationY,
+      isLogoTour
+        ? rotationZ + Math.sin(elapsed * 0.48) * 0.045
+        : rotationZ,
+    );
+  });
+
+  return (
+    <group ref={rootRef}>
+      <Center>
+        <Parcel
+          parcelRef={parcelRef}
+          motion="still"
+          rotationXDegrees={config.rotationXDegrees}
+          rotationYDegrees={config.rotationYDegrees}
+          rotationZDegrees={config.rotationZDegrees}
+        />
+      </Center>
+    </group>
+  );
+}
+
+function FloatingParcelScene({ parcels }: { parcels: FloatingParcelConfig[] }) {
+  return (
+    <>
+      <ambientLight intensity={1.8} />
+      <directionalLight color="#fff0dc" intensity={2.5} position={[3, 4, 5]} />
+      <directionalLight color="#ffad7a" intensity={0.7} position={[-4, 1, 3]} />
+      <Suspense fallback={null}>
+        {parcels.map((config, index) => (
+          <FloatingParcel key={index} config={config} />
+        ))}
+      </Suspense>
+    </>
+  );
+}
+
+export function FloatingParcelField({ parcels }: { parcels: FloatingParcelConfig[] }) {
+  return (
+    <Canvas
+      orthographic
+      camera={{ position: [0, 0, 1000], zoom: 1 }}
+      dpr={[1, 1.5]}
+      gl={{ alpha: true, antialias: true, premultipliedAlpha: false }}
+      onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        background: "transparent",
+        height: "100%",
+        width: "100%",
+      }}
+    >
+      <FloatingParcelScene parcels={parcels} />
+    </Canvas>
+  );
+}
+
+function ParcelOrbitControls({
+  parcelRef,
+  enableZoom,
+}: {
+  parcelRef: RefObject<Group | null>;
+  enableZoom: boolean;
+}) {
   const camera = useThree((state) => state.camera);
   const boxQuaternion = useMemo(() => new Quaternion(), []);
   const localUp = useMemo(() => new Vector3(0, 1, 0), []);
@@ -115,7 +281,7 @@ function ParcelOrbitControls({ parcelRef }: { parcelRef: RefObject<Group | null>
   return (
     <OrbitControls
       enablePan
-      enableZoom={false}
+      enableZoom={enableZoom}
       enableRotate
       enableDamping
       dampingFactor={0.08}
@@ -129,6 +295,7 @@ function ParcelOrbitControls({ parcelRef }: { parcelRef: RefObject<Group | null>
 
 export function ParcelScene({
   interactive = false,
+  enableZoom = false,
   isPanning = false,
   ...props
 }: HeroParcelProps) {
@@ -144,13 +311,14 @@ export function ParcelScene({
           <Parcel parcelRef={parcelRef} isPanning={isPanning} {...props} />
         </Center>
       </Suspense>
-      {interactive && <ParcelOrbitControls parcelRef={parcelRef} />}
+      {interactive && <ParcelOrbitControls parcelRef={parcelRef} enableZoom={enableZoom} />}
     </>
   );
 }
 
 export default function HeroParcel({
   interactive = false,
+  enableZoom = false,
   view = "perspective",
   quarterView = false,
   ...props
@@ -179,7 +347,7 @@ export default function HeroParcel({
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
       style={{ background: "transparent", height: "100%", width: "100%" }}
     >
-      <ParcelScene interactive={interactive} {...props} />
+      <ParcelScene interactive={interactive} enableZoom={enableZoom} {...props} />
     </Canvas>
   );
 }

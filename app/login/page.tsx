@@ -19,8 +19,20 @@ export default function LoginPage() {
     setErrorMessage("");
     setIsSubmitting(true);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    let error;
+    try {
+      const supabase = createClient();
+      const result = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      error = result.error;
+    } catch (caughtError) {
+      error =
+        caughtError instanceof Error
+          ? caughtError
+          : new Error("Unable to connect to Supabase.");
+    }
 
     setIsSubmitting(false);
 

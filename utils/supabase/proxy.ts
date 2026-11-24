@@ -1,8 +1,13 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { hasSupabaseConfig } from "@/utils/supabase/config";
 
 export async function updateSession(request: NextRequest) {
+  if (!hasSupabaseConfig()) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
