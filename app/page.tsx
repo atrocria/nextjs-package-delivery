@@ -167,11 +167,46 @@ function getParcelPlacementStyle(id: HeroParcelId, settings: ParcelDebugSettings
   return { top, right: horizontal };
 }
 
+function ParcelIllustration({
+  className,
+  withContents = false,
+}: {
+  className: string;
+  withContents?: boolean;
+}) {
+  return (
+    <div className={`parcel-illustration ${className}`}>
+      <div className="parcel-flap flap-left" />
+      <div className="parcel-flap flap-right" />
+      <div className="parcel-flap flap-back" />
+      <div className="parcel-face">
+        {withContents && (
+          <div className="parcel-contents" aria-hidden="true">
+            <span className="parcel-fill-item fill-item-one" />
+            <span className="parcel-fill-item fill-item-two" />
+            <span className="parcel-fill-item fill-item-three" />
+          </div>
+        )}
+        <div className="tape-strip" />
+        <div className="shipping-label">
+          <strong>PLOP.</strong>
+          <span>TO: SOMEWHERE NICE</span>
+          <div className="barcode">|||| ||| || ||||</div>
+        </div>
+        <span className="parcel-mark">HANDLE WITH CARE ♡</span>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
-  const journeyRef = useRef<HTMLElement>(null);
   const dropPanelRef = useRef<HTMLElement>(null);
   const dropParcelRef = useRef<HTMLDivElement>(null);
   const dropElapsedRef = useRef(0);
+  const packingRef = useRef<HTMLElement>(null);
+  const truckRef = useRef<HTMLElement>(null);
+  const planeRef = useRef<HTMLElement>(null);
+  const arrivalRef = useRef<HTMLElement>(null);
   const floatingParcelAnchor0 = useRef<HTMLDivElement>(null);
   const floatingParcelAnchor1 = useRef<HTMLDivElement>(null);
   const floatingParcelAnchor2 = useRef<HTMLDivElement>(null);
@@ -182,319 +217,149 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropAnimationComplete, setDropAnimationComplete] = useState(false);
   const dropAnimationCompleteRef = useRef(false);
-  const heroParcelSettings = INITIAL_HERO_PARCELS;
+  const floatingParcelPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const [heroParcelSettings, setHeroParcelSettings] = useState(INITIAL_HERO_PARCELS);
 
   useEffect(() => {
-    const section = journeyRef.current;
-    if (!section) return;
+    const packingSection = packingRef.current;
+    const truckSection = truckRef.current;
+    const planeSection = planeRef.current;
+    const arrivalSection = arrivalRef.current;
+    const page = document.querySelector(".homepage");
+    if (!packingSection || !truckSection || !planeSection || !arrivalSection || !page) return;
 
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
+      gsap.set(".packaging-parcel .parcel-fill-item", { opacity: 1, y: 0, scale: 1 });
+      const packagingTimeline = gsap.timeline({
         scrollTrigger: {
-          trigger: section,
-          start: "top top",
-          end: "+=5000",
-          scrub: 1,
-          pin: true,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
+          trigger: packingSection,
+          start: "top 60%",
+          toggleActions: "play none none reverse",
         },
       });
-      tl.to(
-        ".scroll-indicator",
-        {
-          opacity: 0,
-          y: -10,
-          duration: 0.25,
-        },
-        0.15,
-      );
-      tl.to(
+      packagingTimeline.to(
         ".gather-copy",
         {
           opacity: 1,
           y: 0,
-          duration: 1,
+          duration: 0.65,
         },
-        0,
+        0.45,
       );
-
-      // 2. Assemble the parcel
-      tl.to(
-        ".assembled-parcel",
+      packagingTimeline.to(
+        ".packaging-parcel",
         {
           opacity: 1,
           scale: 1,
           rotation: 0,
-          duration: 1.5,
+          duration: 0.9,
+          ease: "back.out(1.2)",
         },
-        2.2,
+        0.2,
       );
-
-      tl.to(
-        ".parcel-flap",
+      packagingTimeline.to(
+        ".packaging-parcel .parcel-flap",
         {
           rotateX: 0,
-          duration: 1,
-          stagger: 0.2,
+          duration: 0.65,
+          stagger: 0.12,
         },
-        3,
+        1,
       );
-
-      tl.to(
+      packagingTimeline.to(
         ".gather-copy",
         {
           opacity: 0,
-          y: -50,
+          y: -30,
+          duration: 0.4,
         },
-        3.5,
+        1.6,
       );
-
-      tl.to(
+      packagingTimeline.to(
         ".seal-copy",
         {
           opacity: 1,
           y: 0,
+          duration: 0.6,
         },
-        3.7,
+        1.8,
       );
-
-      // 3. Tape seals the box
-      tl.to(
-        ".tape-strip",
+      packagingTimeline.to(
+        ".packaging-parcel .tape-strip",
         {
           scaleX: 1,
-          duration: 1,
+          duration: 0.7,
         },
-        4,
+        1.85,
       );
-
-      tl.to(
-        ".shipping-label",
+      packagingTimeline.to(
+        ".packaging-parcel .shipping-label",
         {
           scale: 1,
           rotation: -4,
           duration: 0.6,
         },
-        4.5,
+        2.15,
       );
 
-      tl.to(
-        ".assembled-parcel",
-        {
-          y: -60,
-          scale: 0.7,
-          duration: 1,
+      const truckTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: truckSection,
+          start: "top 60%",
+          toggleActions: "play none none reverse",
         },
-        5,
-      );
-
-      tl.to(
-        ".seal-copy",
-        {
-          opacity: 0,
-        },
-        5.2,
-      );
-
-      // 4. Truck enters
-      tl.to(
-        ".truck-scene",
-        {
-          opacity: 1,
-          duration: 0.5,
-        },
-        5.5,
-      );
-
-      tl.to(
+      });
+      truckTimeline.to(".truck-scene", { opacity: 1, duration: 0.5 }, 0.35);
+      truckTimeline.fromTo(
         ".delivery-truck",
-        {
-          x: 0,
-          duration: 1.5,
-          ease: "power2.out",
-        },
-        5.5,
+        { x: -650 },
+        { x: 0, duration: 1.1, ease: "power2.out" },
+        0.45,
       );
+      truckTimeline.to(".truck-copy", { opacity: 1, y: 0, duration: 0.65 }, 0.8);
 
-      tl.to(
-        ".assembled-parcel",
-        {
-          x: 0,
-          y: 80,
-          scale: 0.35,
-          duration: 1,
+      const planeTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: planeSection,
+          start: "top 60%",
+          toggleActions: "play none none reverse",
         },
-        6,
-      );
-
-      tl.to(
-        ".assembled-parcel",
-        {
-          x: 0,
-          y: 180,
-          scale: 0.2,
-          opacity: 0,
-          duration: 0.8,
-        },
-        7,
-      );
-
-      tl.to(
-        ".truck-copy",
-        {
-          opacity: 1,
-          y: 0,
-        },
-        6.5,
-      );
-
-      tl.to(
-        ".delivery-truck",
-        {
-          x: 1200,
-          duration: 2,
-          ease: "power2.in",
-        },
-        7.5,
-      );
-
-      tl.to(
-        ".truck-scene",
-        {
-          opacity: 0,
-          duration: 0.5,
-        },
-        9,
-      );
-
-      tl.to(
-        ".truck-copy",
-        {
-          opacity: 0,
-        },
-        9,
-      );
-
-      // 5. Airplane takes over
-      tl.to(
-        ".sky-scene",
-        {
-          opacity: 1,
-          duration: 1,
-        },
-        9,
-      );
-
-      tl.fromTo(
+      });
+      planeTimeline.to(".sky-scene", { opacity: 1, duration: 0.5 }, 0.35);
+      planeTimeline.fromTo(
         ".airplane",
         { x: -500, y: 100, rotation: -8 },
-        {
-          x: 0,
-          y: 0,
-          rotation: 0,
-          duration: 2,
-        },
-        9.5,
+        { x: 0, y: 0, rotation: 0, duration: 1.6, ease: "power2.out" },
+        0.45,
       );
+      planeTimeline.to(".cloud-one", { x: 280, duration: 2.2 }, 0.7);
+      planeTimeline.to(".cloud-two", { x: -260, duration: 2.2 }, 0.7);
+      planeTimeline.to(".plane-copy", { opacity: 1, y: 0, duration: 0.65 }, 1.15);
+      planeTimeline.to(".airplane", { x: 500, y: -100, rotation: -10, duration: 1.2 }, 2.6);
 
-      tl.to(
-        ".cloud-one",
-        {
-          x: 500,
-          duration: 3,
+      const arrivalTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: arrivalSection,
+          start: "top 60%",
+          toggleActions: "play none none reverse",
         },
-        10,
-      );
-
-      tl.to(
-        ".cloud-two",
-        {
-          x: -400,
-          duration: 3,
-        },
-        10,
-      );
-
-      tl.to(
-        ".plane-copy",
-        {
-          opacity: 1,
-          y: 0,
-        },
-        10.5,
-      );
-
-      tl.to(
-        ".airplane",
-        {
-          x: 1300,
-          y: -250,
-          rotation: -10,
-          duration: 2,
-        },
-        12,
-      );
-
-      tl.to(
-        ".sky-scene",
-        {
-          opacity: 0,
-          duration: 0.8,
-        },
-        13.5,
-      );
-
-      tl.to(
-        ".plane-copy",
-        {
-          opacity: 0,
-        },
-        13.5,
-      );
-
-      // 6. Arrive at the house
-      tl.to(
-        ".home-scene",
-        {
-          opacity: 1,
-          duration: 1,
-        },
-        14,
-      );
-
-      tl.fromTo(
+      });
+      arrivalTimeline.to(".home-scene", { opacity: 1, duration: 0.5 }, 0.35);
+      arrivalTimeline.fromTo(
         ".home-parcel",
         { y: -350, rotation: -15, scale: 0.5 },
         {
           y: 0,
           rotation: 0,
           scale: 1,
-          duration: 2,
+          duration: 1.4,
           ease: "bounce.out",
         },
-        15,
+        0.5,
       );
-
-      tl.to(
-        ".home-door",
-        {
-          rotationY: -90,
-          duration: 1,
-        },
-        16.5,
-      );
-
-      tl.to(
-        ".final-copy",
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1,
-        },
-        17,
-      );
-    }, section);
+      arrivalTimeline.to(".home-door", { rotationY: -90, duration: 0.7 }, 1.75);
+      arrivalTimeline.to(".final-copy", { opacity: 1, y: 0, duration: 0.7 }, 1.95);
+    }, page);
 
     return () => ctx.revert();
   }, []);
@@ -503,16 +368,23 @@ export default function Home() {
     const section = dropPanelRef.current;
     const parcel = dropParcelRef.current;
     if (!section || !parcel) return;
+    const openingParcel = section.querySelector(".drop-opening-parcel");
+    const copy = section.querySelector(".drop-panel-copy");
+    if (!(openingParcel instanceof HTMLElement) || !(copy instanceof HTMLElement)) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) {
-      gsap.set(parcel, { y: 0, scale: 1, opacity: 1, rotation: 0 });
+      gsap.set(parcel, { y: 0, scale: 1, opacity: 0, rotation: 0 });
+      gsap.set(openingParcel, { y: 0, scale: 1, opacity: 1, rotation: 0 });
+      gsap.set(copy, { y: 0, opacity: 1 });
+      gsap.set(section.querySelectorAll(".parcel-fill-item"), { y: 0, scale: 1, opacity: 1 });
       const frame = window.requestAnimationFrame(() => setDropAnimationComplete(true));
       return () => window.cancelAnimationFrame(frame);
     }
 
     const ctx = gsap.context(() => {
       gsap.set(parcel, { y: "-78vh", scale: 0.76, opacity: 0, rotation: 0 });
+      gsap.set(openingParcel, { y: 30, scale: 0.65, opacity: 0, rotation: -8 });
       const timeline = gsap.timeline({
         scrollTrigger: {
           trigger: section,
@@ -523,7 +395,7 @@ export default function Home() {
           pin: true,
           anticipatePin: 1,
           snap: {
-            snapTo: [0, 1],
+            snapTo: [0, 0.45, 1],
             delay: 1.45,
             duration: { min: 0.25, max: 0.65 },
             ease: "power1.inOut",
@@ -542,6 +414,15 @@ export default function Home() {
       timeline.to(parcel, { y: 0, duration: 0.12, ease: "power2.in" });
       timeline.to(parcel, { rotation: 2.5, duration: 0.055, ease: "power2.out" }, "<");
       timeline.to(parcel, { rotation: 0, duration: 0.12, ease: "power2.inOut" });
+      timeline.to(parcel, { opacity: 0, scale: 0.82, duration: 0.3 }, 1.25);
+      timeline.to(openingParcel, { y: 0, scale: 1, opacity: 1, rotation: 0, duration: 0.45 }, 1.25);
+      timeline.to(copy, { opacity: 1, y: 0, duration: 0.55 }, 1.3);
+      timeline.fromTo(
+        ".drop-opening-parcel .parcel-fill-item",
+        { opacity: 0, y: -38, scale: 0.55 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.38, stagger: 0.18, ease: "power2.out" },
+        1.85,
+      );
       timeline.eventCallback("onUpdate", () => {
         dropElapsedRef.current = timeline.time();
         const isComplete = timeline.progress() >= 1;
@@ -564,8 +445,56 @@ export default function Home() {
     if (tracking.trim()) setTrackingResult(true);
   }
 
+  function handleFloatingParcelPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.button !== 0) return;
+    floatingParcelPointerRef.current = { x: e.clientX, y: e.clientY };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function handleFloatingParcelPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    const previous = floatingParcelPointerRef.current;
+    if (!previous) return;
+
+    const deltaX = e.clientX - previous.x;
+    const deltaY = e.clientY - previous.y;
+    floatingParcelPointerRef.current = { x: e.clientX, y: e.clientY };
+    setHeroParcelSettings((settings) => ({
+      ...settings,
+      floating: {
+        ...settings.floating,
+        rotationX: settings.floating.rotationX + deltaY * 0.8,
+        rotationY: settings.floating.rotationY + deltaX * 0.8,
+      },
+    }));
+  }
+
+  function handleFloatingParcelPointerUp() {
+    floatingParcelPointerRef.current = null;
+  }
+
+  function handleFloatingParcelKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const rotationByKey: Record<string, { x: number; y: number }> = {
+      ArrowDown: { x: 8, y: 0 },
+      ArrowLeft: { x: 0, y: -8 },
+      ArrowRight: { x: 0, y: 8 },
+      ArrowUp: { x: -8, y: 0 },
+    };
+    const rotation = rotationByKey[e.key];
+    if (!rotation) return;
+
+    e.preventDefault();
+    setHeroParcelSettings((settings) => ({
+      ...settings,
+      floating: {
+        ...settings.floating,
+        rotationX: settings.floating.rotationX + rotation.x,
+        rotationY: settings.floating.rotationY + rotation.y,
+      },
+    }));
+  }
+
   return (
-    <main>
+    <main className="homepage">
       {/* NAVIGATION */}
       <nav className="navbar [height:82px] [padding:0_7%] [display:flex] [align-items:center] [justify-content:space-between] [background:var(--cream)] [position:relative] [z-index:50]">
         <a
@@ -612,7 +541,7 @@ export default function Home() {
 
       {/* HERO */}
       <section
-        className="hero-section [height:calc(100vh_-_82px)] [min-height:650px] [position:relative] [overflow:hidden] [background:var(--cream)] [isolation:isolate]"
+        className="hero-section [position:relative] [overflow:hidden] [background:var(--cream)] [isolation:isolate]"
       >
         <div
           className="journey-background [position:absolute] [inset:0] [z-index:-1]"
@@ -700,10 +629,17 @@ export default function Home() {
             ]}
           />
           <div
-            className="float-box float-a [position:absolute] [width:190px] [height:190px] [overflow:visible] [z-index:1]"
+            className="float-box float-a [position:absolute] [width:96px] [height:96px] [overflow:visible] [z-index:1]"
             ref={floatingParcelAnchor0}
             style={getParcelPlacementStyle("floating", heroParcelSettings.floating)}
-            aria-hidden="true"
+            role="button"
+            tabIndex={0}
+            aria-label="Drag or use the arrow keys to spin the floating parcel"
+            onPointerDown={handleFloatingParcelPointerDown}
+            onPointerMove={handleFloatingParcelPointerMove}
+            onPointerUp={handleFloatingParcelPointerUp}
+            onPointerCancel={handleFloatingParcelPointerUp}
+            onKeyDown={handleFloatingParcelKeyDown}
           />
           <div
             className="decorative-parcel float-b"
@@ -733,7 +669,7 @@ export default function Home() {
 
         {/* HERO MAIN PARCEL (3D & PANNABLE) */}
         <div
-          className="hero-box-container [position:absolute] [width:min(600px,_45vw)] [height:min(600px,_55vw)] [min-width:260px] [min-height:260px] [pointer-events:auto] [z-index:10] [user-select:none]"
+          className="hero-box-container [position:absolute] [width:min(540px,_42vw,_70svh)] [height:min(540px,_50vw,_70svh)] [min-width:240px] [min-height:240px] [pointer-events:auto] [z-index:10] [user-select:none]"
           style={getParcelPlacementStyle("main", heroParcelSettings.main)}
         >
           <div
@@ -753,13 +689,16 @@ export default function Home() {
             <div className="hero-box-shadow [width:58%] [height:20px] [border-radius:50%] [background:radial-gradient(ellipse_at_center,_rgba(60,_25,_5,_0.28)_0%,_rgba(60,_25,_5,_0)_72%)] [margin-top:-12px] [opacity:0.35]" />
           </div>
         </div>
+
+        <div className="scroll-indicator [position:absolute] [bottom:14px] [left:50%] [transform:translateX(-50%)] [z-index:20] [display:flex] [flex-direction:column] [align-items:center] [gap:3px] [font-size:9px] [letter-spacing:2px] [color:#898477] [pointer-events:none]">
+          <span>SCROLL TO FOLLOW THE JOURNEY</span>
+          <span className="scroll-chevron" aria-hidden="true">
+            ⮟
+          </span>
+        </div>
       </section>
 
-      <section
-        className="drop-panel"
-        ref={dropPanelRef}
-        aria-labelledby="drop-panel-heading"
-      >
+      <section className="drop-panel" ref={dropPanelRef} aria-labelledby="drop-panel-heading">
         <div className="drop-panel-inner">
           <div className="drop-panel-copy">
             <span className="drop-panel-eyebrow">A LITTLE MOMENT OF GRAVITY</span>
@@ -769,11 +708,10 @@ export default function Home() {
               land softly.
             </h2>
             <p>
-              One last little plop before the journey continues. Once it lands,
-              drag to turn it and take a closer look.
+              One last little plop before the box opens and gets packed for its journey.
             </p>
             <span className="drop-panel-hint" aria-live="polite">
-              {dropAnimationComplete ? "Landed — drag to turn it" : "Wait for the plop"}
+              {dropAnimationComplete ? "Packed and ready for the next step" : "Wait for the plop"}
             </span>
           </div>
           <div className="drop-panel-stage">
@@ -792,14 +730,15 @@ export default function Home() {
                 rotationZDegrees={DROP_LANDING_ROTATION.z}
               />
             </div>
+            <ParcelIllustration className="drop-opening-parcel" withContents />
           </div>
         </div>
       </section>
 
-      {/* SCROLL-DRIVEN DELIVERY STORY */}
       <section
-        className="journey [position:relative] [overflow:hidden] [background:var(--cream)] [isolation:isolate]"
-        ref={journeyRef}
+        className="packing-section story-section [position:relative] [overflow:hidden] [background:var(--cream)] [isolation:isolate]"
+        ref={packingRef}
+        aria-labelledby="packing-heading"
       >
         <div
           className="journey-background [position:absolute] [inset:0] [z-index:-1]"
@@ -808,40 +747,16 @@ export default function Home() {
               "radial-gradient(ellipse at 50% 45%, #fff 0%, transparent 65%), radial-gradient(ellipse at 85% 15%, #fce5cf 0%, transparent 35%)",
           }}
         />
-        {/* GATHERING TEXT */}
         <div className="gather-copy scene-copy [position:absolute] [left:10%] [top:50%] [transform:translateY(-50%)] [z-index:5] [width:42%]">
           <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
-            IT ALL STARTS SOMEWHERE
+            PACKING THE GOOD STUFF
           </span>
-          <h2>
-            Let&apos;s get
-            <br />
-            things moving.
-          </h2>
-          <p>Every great delivery starts with a little box.</p>
+          <h2 id="packing-heading">A little care goes a long way.</h2>
+          <p>Everything tucked in and ready for a safe trip.</p>
         </div>
 
-        {/* ASSEMBLED PARCEL */}
-        <div className="assembled-parcel [position:absolute] [width:210px] [height:190px] [top:48%] [left:65%] [opacity:0] [transform:translate(-50%,_-50%)_scale(0.2)_rotate(-15deg)] [transform-style:preserve-3d] [z-index:3] [filter:drop-shadow(0_25px_20px_#6b462833)]">
-          <div className="parcel-flap flap-left [position:absolute] [width:50%] [height:35%] [top:-30%] [background:#e1b17f] [border:2px_solid_#b98556] [z-index:2] [transform-origin:bottom] [left:0] [transform:rotateX(90deg)]" />
-          <div className="parcel-flap flap-right [position:absolute] [width:50%] [height:35%] [top:-30%] [background:#e1b17f] [border:2px_solid_#b98556] [z-index:2] [transform-origin:bottom] [right:0] [transform:rotateX(90deg)]" />
-          <div className="parcel-flap flap-back [position:absolute] [width:100%] [height:35%] [background:#e1b17f] [border:2px_solid_#b98556] [z-index:2] [transform-origin:bottom] [left:0] [top:-22%]" />
-          <div className="parcel-face [position:absolute] [inset:0] [background:#c9915e] [border:2px_solid_#ad794e] [display:flex] [align-items:center] [justify-content:center]">
-            <div className="tape-strip [position:absolute] [width:38px] [height:100%] [left:42%] [background:#ff914d] [transform:scaleX(0)] [transform-origin:left] [z-index:2]" />
-            <div className="shipping-label [position:absolute] [width:95px] [height:78px] [padding:9px] [background:#fff9e9] [color:#39332c] [z-index:3] [transform:scale(0)] [display:flex] [flex-direction:column] [gap:5px] [font-size:8px]">
-              <strong>PLOP.</strong>
-              <span>TO: SOMEWHERE NICE</span>
-              <div className="barcode [letter-spacing:2px] [font-size:13px]">
-                |||| ||| || ||||
-              </div>
-            </div>
-            <span className="parcel-mark [position:absolute] [bottom:13px] [left:12px] [font-size:8px] [letter-spacing:1px] [color:#f9e5ca]">
-              HANDLE WITH CARE ♡
-            </span>
-          </div>
-        </div>
+        <ParcelIllustration className="packaging-parcel" withContents />
 
-        {/* SEAL TEXT */}
         <div className="seal-copy scene-copy [position:absolute] [left:10%] [top:50%] [transform:translateY(-50%)] [z-index:5] [width:42%]">
           <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
             PACKED WITH CARE
@@ -853,8 +768,13 @@ export default function Home() {
           </h2>
           <p>Sealed, labelled and ready for an adventure.</p>
         </div>
+      </section>
 
-        {/* TRUCK SCENE */}
+      <section
+        className="truck-section story-section [position:relative] [overflow:hidden] [background:#f9edda] [isolation:isolate]"
+        ref={truckRef}
+        aria-labelledby="truck-heading"
+      >
         <div className="truck-scene [position:absolute] [inset:0] [opacity:0] [overflow:hidden] [background:#f9edda]">
           <div className="road [position:absolute] [bottom:16%] [width:100%] [height:95px] [background:#d9d0c2] [border-top:7px_solid_#c4b9a9]" />
           <div className="road-line [position:absolute] [bottom:calc(16%_+_42px)] [width:100%] [border-top:4px_dashed_#fff9ef]" />
@@ -874,13 +794,18 @@ export default function Home() {
           <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
             ON THE ROAD
           </span>
-          <h2>
+          <h2 id="truck-heading">
             Off we <span>go!</span>
           </h2>
           <p>Your parcel is hitting the road.</p>
         </div>
+      </section>
 
-        {/* AIRPLANE SCENE */}
+      <section
+        className="plane-section story-section [position:relative] [overflow:hidden] [background:#e9f4f4] [isolation:isolate]"
+        ref={planeRef}
+        aria-labelledby="plane-heading"
+      >
         <div className="sky-scene [position:absolute] [inset:0] [opacity:0] [background:linear-gradient(180deg,_#b6def3,_#f1f7ed)] [overflow:hidden]">
           <div className="cloud cloud-one [position:absolute] [color:white] [font-size:170px] [opacity:0.8] [top:10%] [left:10%]">
             ☁
@@ -901,15 +826,20 @@ export default function Home() {
           <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
             GOING THE EXTRA MILE
           </span>
-          <h2>
+          <h2 id="plane-heading">
             Taking the
             <br />
             <span>scenic route.</span>
           </h2>
           <p>Some parcels just need to spread their wings.</p>
         </div>
+      </section>
 
-        {/* HOUSE SCENE */}
+      <section
+        className="arrival-section story-section [position:relative] [overflow:hidden] [background:#c6e6f3] [isolation:isolate]"
+        ref={arrivalRef}
+        aria-labelledby="arrival-heading"
+      >
         <div className="home-scene [position:absolute] [inset:0] [opacity:0] [background:linear-gradient(#c6e6f3_0_72%,_#c8dfb3_72%)] [overflow:hidden]">
           <div className="sun [position:absolute] [right:17%] [top:12%] [width:90px] [height:90px] [background:#ffd68c] [border-radius:50%]" />
           <div className="house [position:absolute] [bottom:17%] [left:50%] [transform:translateX(-50%)] [width:330px] [height:310px]">
@@ -938,7 +868,7 @@ export default function Home() {
           <span className="eyebrow [display:inline-flex] [align-items:center] [gap:9px] [font-size:10px] [font-weight:800] [letter-spacing:2px] [color:#8c8679] [margin-bottom:23px]">
             MISSION ACCOMPLISHED
           </span>
-          <h2>
+          <h2 id="arrival-heading">
             <span>Plop!</span> It&apos;s here.
           </h2>
           <p>Your parcel made it. Delivered with a little bit of joy.</p>
@@ -948,13 +878,6 @@ export default function Home() {
           >
             Send another parcel <ArrowRight size={18} />
           </a>
-        </div>
-
-        <div className="scroll-indicator [position:absolute] [bottom:16px] [left:50%] [transform:translateX(-50%)] [z-index:20] [opacity:1] [visibility:visible] [display:flex] [flex-direction:column] [align-items:center] [gap:3px] [font-size:9px] [letter-spacing:2px] [color:#898477] [pointer-events:none]">
-          <span>SCROLL TO FOLLOW THE JOURNEY</span>
-          <span className="scroll-chevron" aria-hidden="true">
-            ⮟
-          </span>
         </div>
       </section>
 
@@ -1177,6 +1100,9 @@ export default function Home() {
           font-family: "DM Sans", sans-serif;
           overflow-x: hidden;
         }
+        .homepage {
+          background: var(--dark);
+        }
         a {
           text-decoration: none;
           color: inherit;
@@ -1192,8 +1118,8 @@ export default function Home() {
           color: var(--orange);
         }
         .hero-section,
-        .journey {
-          --floating-parcel-top: 15%;
+        .packing-section {
+          --floating-parcel-top: 3%;
           --floating-parcel-left: 5%;
           --floating-parcel-b-top: 8%;
           --floating-parcel-b-left: 46%;
@@ -1206,15 +1132,24 @@ export default function Home() {
           --hero-parcel-top: 18%;
           --hero-parcel-right: clamp(24px, 6vw, 90px);
         }
-        .journey {
-          height: 100vh;
-          height: 100svh;
-          min-height: 100vh;
-          min-height: 100svh;
+        .hero-section {
+          height: calc(100vh - 82px);
+          height: clamp(480px, calc(100svh - 82px), 860px);
+        }
+        .story-section {
+          height: min(100vh, 900px);
+          height: min(100svh, 900px);
+          min-height: 620px;
         }
         .float-a {
           top: var(--floating-parcel-top);
           left: var(--floating-parcel-left);
+          pointer-events: auto;
+          touch-action: none;
+          cursor: grab;
+        }
+        .float-a:active {
+          cursor: grabbing;
         }
         .decorative-parcel {
           position: absolute;
@@ -1224,26 +1159,26 @@ export default function Home() {
         .float-b {
           top: var(--floating-parcel-b-top);
           left: var(--floating-parcel-b-left);
-          width: 124px;
-          height: 124px;
+          width: 88px;
+          height: 88px;
         }
         .float-c {
           top: var(--floating-parcel-c-top);
           left: var(--floating-parcel-c-left);
-          width: 88px;
-          height: 88px;
+          width: 68px;
+          height: 68px;
         }
         .float-d {
           top: var(--floating-parcel-d-top);
           left: var(--floating-parcel-d-left);
-          width: 112px;
-          height: 112px;
+          width: 78px;
+          height: 78px;
         }
         .float-e {
           top: var(--floating-parcel-e-top);
           right: var(--floating-parcel-e-right);
-          width: 76px;
-          height: 76px;
+          width: 60px;
+          height: 60px;
         }
         .hero-box-container {
           top: var(--hero-parcel-top);
@@ -1331,9 +1266,6 @@ export default function Home() {
         .button-primary:hover {
           transform: translateY(-3px);
         }
-        .float-a:active {
-          cursor: grabbing;
-        }
         .float-a canvas {
           pointer-events: none;
         }
@@ -1341,8 +1273,9 @@ export default function Home() {
           cursor: grabbing;
         }
         .drop-panel {
-          height: 100vh;
-          height: 100svh;
+          height: min(100vh, 900px);
+          height: min(100svh, 900px);
+          min-height: 620px;
           position: relative;
           overflow: hidden;
           color: var(--cream);
@@ -1364,6 +1297,8 @@ export default function Home() {
           position: relative;
           z-index: 2;
           max-width: 470px;
+          opacity: 0;
+          transform: translateY(28px);
         }
         .drop-panel-eyebrow {
           color: #ffc49b;
@@ -1403,20 +1338,153 @@ export default function Home() {
         }
         .drop-panel-ground {
           position: absolute;
-          bottom: 19%;
-          width: 76%;
-          height: 34px;
-          border-radius: 50%;
-          background: radial-gradient(ellipse, #ff914d5c 0%, #ff914d00 72%);
-          filter: blur(4px);
+          bottom: 14%;
+          width: 78%;
+          height: 44px;
+          border: 1px solid #ffbd8b55;
+          border-radius: 50% 50% 12px 12px / 60% 60% 12px 12px;
+          background:
+            radial-gradient(ellipse at 50% 0%, #ff914d66 0%, #ff914d00 72%),
+            linear-gradient(180deg, #59483c 0%, #332c26 100%);
+          box-shadow: 0 16px 30px #00000035;
         }
         .drop-parcel {
-          position: relative;
+          position: absolute;
           z-index: 1;
-          width: min(460px, 42vw);
-          height: min(460px, 42vw);
+          width: min(460px, 40vw, 62svh);
+          height: min(460px, 40vw, 62svh);
+          bottom: calc(14% + 44px - 150px);
+          left: 0;
+          right: 0;
+          margin-inline: auto;
           filter: drop-shadow(0 28px 20px #00000042);
           will-change: transform, opacity;
+        }
+        .parcel-illustration {
+          position: absolute;
+          width: 210px;
+          height: 190px;
+          transform-style: preserve-3d;
+          filter: drop-shadow(0 25px 20px #6b462833);
+        }
+        .drop-opening-parcel {
+          z-index: 3;
+          bottom: calc(14% + 44px);
+          left: 0;
+          right: 0;
+          margin-inline: auto;
+          opacity: 0;
+          will-change: transform, opacity;
+        }
+        .packaging-parcel {
+          z-index: 3;
+          top: 48%;
+          left: 65%;
+          margin-top: -95px;
+          margin-left: -105px;
+          opacity: 0;
+          transform: scale(0.2) rotate(-15deg);
+          will-change: transform, opacity;
+        }
+        .parcel-flap {
+          position: absolute;
+          z-index: 2;
+          border: 2px solid #b98556;
+          background: #e1b17f;
+          transform-origin: bottom;
+          backface-visibility: hidden;
+        }
+        .flap-left,
+        .flap-right {
+          top: -30%;
+          width: 50%;
+          height: 35%;
+          transform: rotateX(90deg);
+        }
+        .flap-left {
+          left: 0;
+        }
+        .flap-right {
+          right: 0;
+        }
+        .flap-back {
+          top: -22%;
+          left: 0;
+          width: 100%;
+          height: 35%;
+        }
+        .parcel-face {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #ad794e;
+          background: #c9915e;
+        }
+        .parcel-contents {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+        }
+        .parcel-fill-item {
+          position: absolute;
+          bottom: 24px;
+          width: 22px;
+          height: 17px;
+          border: 1px solid #95633f;
+          border-radius: 3px;
+          opacity: 0;
+          transform: translateY(-38px) scale(0.55);
+          box-shadow: inset 0 3px 0 #ffffff66;
+        }
+        .fill-item-one {
+          left: 28%;
+          background: #e8c996;
+        }
+        .fill-item-two {
+          left: 43%;
+          background: #a9c2a0;
+        }
+        .fill-item-three {
+          left: 58%;
+          background: #edac77;
+        }
+        .tape-strip {
+          position: absolute;
+          z-index: 2;
+          left: 42%;
+          width: 38px;
+          height: 100%;
+          background: var(--orange);
+          transform: scaleX(0);
+          transform-origin: left;
+        }
+        .shipping-label {
+          position: absolute;
+          z-index: 3;
+          display: flex;
+          width: 95px;
+          height: 78px;
+          flex-direction: column;
+          gap: 5px;
+          padding: 9px;
+          background: #fff9e9;
+          color: #39332c;
+          font-size: 8px;
+          transform: scale(0);
+        }
+        .barcode {
+          font-size: 13px;
+          letter-spacing: 2px;
+        }
+        .parcel-mark {
+          position: absolute;
+          bottom: 13px;
+          left: 12px;
+          color: #f9e5ca;
+          font-size: 8px;
+          letter-spacing: 1px;
         }
         .gather-copy,
         .seal-copy,
@@ -1588,18 +1656,15 @@ export default function Home() {
           }
           .hero-section {
             height: calc(100vh - 70px);
-            min-height: 650px;
-          }
-          .journey {
-            height: 100vh;
-            height: 100svh;
-            min-height: 100vh;
-            min-height: 100svh;
+            height: clamp(480px, calc(100svh - 70px), 860px);
           }
           .scene-copy {
             left: 7%;
             width: 86%;
             top: 29%;
+          }
+          .hero-copy {
+            top: 34%;
           }
           .hero-copy h1 {
             font-size: clamp(43px, 12vw, 65px);
@@ -1617,10 +1682,12 @@ export default function Home() {
           }
           .float-a {
             right: auto;
+            width: 72px;
+            height: 72px;
           }
           .hero-section,
-          .journey {
-            --floating-parcel-top: 11%;
+          .packing-section {
+            --floating-parcel-top: 3%;
             --floating-parcel-left: 3%;
             --floating-parcel-b-top: 5%;
             --floating-parcel-b-left: 70%;
@@ -1630,19 +1697,19 @@ export default function Home() {
             --floating-parcel-d-left: 58%;
             --floating-parcel-e-top: 19%;
             --floating-parcel-e-right: 8%;
-            --hero-parcel-top: 52%;
+            --hero-parcel-top: 58%;
             --hero-parcel-right: 5%;
           }
           .hero-box-container {
-            width: 220px;
-            height: 220px;
+            width: min(190px, 52vw);
+            height: min(190px, 52vw);
             min-width: 0;
             min-height: 0;
           }
           .drop-panel-inner {
             grid-template-columns: minmax(0, 1fr);
             grid-template-rows: auto minmax(0, 1fr);
-            padding: 6vh 7% 3vh;
+            padding: 5vh 7% 3vh;
           }
           .drop-panel-copy h2 {
             margin: 10px 0 12px;
@@ -1658,16 +1725,27 @@ export default function Home() {
             margin-top: 10px;
           }
           .drop-parcel {
-            width: min(340px, 76vw);
-            height: min(340px, 76vw);
+            width: min(290px, 68vw, 42svh);
+            height: min(290px, 68vw, 42svh);
+            bottom: calc(12% + 32px - 90px);
           }
           .drop-panel-ground {
             bottom: 12%;
+            width: 82%;
+            height: 32px;
           }
-          .assembled-parcel {
-            left: 50%;
+          .drop-opening-parcel {
+            width: 180px;
+            height: 162px;
+            bottom: calc(12% + 32px);
+          }
+          .packaging-parcel {
             top: 65%;
-            transform: translate(-50%, -50%) scale(0.2);
+            left: 50%;
+            width: 180px;
+            height: 162px;
+            margin-top: -81px;
+            margin-left: -90px;
           }
           .truck-copy,
           .gather-copy,
@@ -1693,7 +1771,7 @@ export default function Home() {
           .final-copy {
             top: 27%;
             width: 90%;
-            left: 50%;
+            left: 5%;
           }
           .final-copy h2 {
             font-size: 48px;

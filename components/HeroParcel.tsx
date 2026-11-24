@@ -54,16 +54,19 @@ function Parcel({
         parcelBody.geometry,
         new MeshBasicMaterial({
           color: "#22120b",
-          depthWrite: false,
+          depthWrite: true,
           side: BackSide,
           toneMapped: false,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 1,
         }),
       );
 
       toonHull.name = "toon-outline";
       toonHull.position.copy(parcelBody.position);
       toonHull.quaternion.copy(parcelBody.quaternion);
-      toonHull.scale.copy(parcelBody.scale).multiplyScalar(1.035);
+      toonHull.scale.copy(parcelBody.scale).multiplyScalar(1.025);
       toonHull.renderOrder = -1;
       parcelBody.parent.add(toonHull);
     }
@@ -157,7 +160,7 @@ function FloatingParcel({ config }: { config: FloatingParcelConfig }) {
   const parcelRef = useRef<Group | null>(null);
   const bounds = useMemo(() => new Box3(), []);
   const dimensions = useMemo(() => new Vector3(), []);
-  const measured = useRef(false);
+  const measuredAnchorSize = useRef({ width: 0, height: 0 });
   const { gl, size } = useThree();
 
   useFrame(({ clock }) => {
@@ -174,7 +177,11 @@ function FloatingParcel({ config }: { config: FloatingParcelConfig }) {
       0,
     );
 
-    if (!measured.current) {
+    if (
+      anchorBounds.width !== measuredAnchorSize.current.width ||
+      anchorBounds.height !== measuredAnchorSize.current.height
+    ) {
+      root.scale.setScalar(1);
       parcel.updateWorldMatrix(true, true);
       bounds.setFromObject(parcel);
       bounds.getSize(dimensions);
@@ -183,7 +190,10 @@ function FloatingParcel({ config }: { config: FloatingParcelConfig }) {
           (Math.min(anchorBounds.width / dimensions.x, anchorBounds.height / dimensions.y) *
             0.72),
         );
-        measured.current = true;
+        measuredAnchorSize.current = {
+          width: anchorBounds.width,
+          height: anchorBounds.height,
+        };
       }
     }
 
