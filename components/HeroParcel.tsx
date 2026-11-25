@@ -250,7 +250,7 @@ export function FloatingParcelField({ parcels }: { parcels: FloatingParcelConfig
   return (
     <Canvas
       orthographic
-      camera={{ position: [0, 0, 1000], zoom: 1 }}
+      camera={{ position: [0, 0, 1000], zoom: 1, far: 2000 }}
       dpr={[1, 1.5]}
       gl={{ alpha: true, antialias: true, premultipliedAlpha: false }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}

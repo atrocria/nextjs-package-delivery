@@ -207,6 +207,7 @@ export default function Home() {
   const truckRef = useRef<HTMLElement>(null);
   const planeRef = useRef<HTMLElement>(null);
   const arrivalRef = useRef<HTMLElement>(null);
+  const floatingParcelFieldRef = useRef<HTMLDivElement>(null);
   const floatingParcelAnchor0 = useRef<HTMLDivElement>(null);
   const floatingParcelAnchor1 = useRef<HTMLDivElement>(null);
   const floatingParcelAnchor2 = useRef<HTMLDivElement>(null);
@@ -445,6 +446,37 @@ export default function Home() {
     if (tracking.trim()) setTrackingResult(true);
   }
 
+  function moveFloatingParcel(anchor: HTMLDivElement, deltaX: number, deltaY: number) {
+    const field = floatingParcelFieldRef.current;
+    if (!field) return;
+
+    const fieldBounds = field.getBoundingClientRect();
+    if (fieldBounds.width === 0 || fieldBounds.height === 0) return;
+
+    const anchorBounds = anchor.getBoundingClientRect();
+    const nextLeft = Math.min(
+      fieldBounds.right - anchorBounds.width,
+      Math.max(fieldBounds.left, anchorBounds.left + deltaX),
+    );
+    const nextTop = Math.min(
+      fieldBounds.bottom - anchorBounds.height,
+      Math.max(fieldBounds.top, anchorBounds.top + deltaY),
+    );
+    const appliedDeltaX = nextLeft - anchorBounds.left;
+    const appliedDeltaY = nextTop - anchorBounds.top;
+
+    if (appliedDeltaX === 0 && appliedDeltaY === 0) return;
+
+    setHeroParcelSettings((settings) => ({
+      ...settings,
+      floating: {
+        ...settings.floating,
+        offsetX: settings.floating.offsetX + (appliedDeltaX / fieldBounds.width) * 100,
+        offsetY: settings.floating.offsetY + (appliedDeltaY / fieldBounds.height) * 100,
+      },
+    }));
+  }
+
   function handleFloatingParcelPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0) return;
     floatingParcelPointerRef.current = { x: e.clientX, y: e.clientY };
@@ -458,14 +490,7 @@ export default function Home() {
     const deltaX = e.clientX - previous.x;
     const deltaY = e.clientY - previous.y;
     floatingParcelPointerRef.current = { x: e.clientX, y: e.clientY };
-    setHeroParcelSettings((settings) => ({
-      ...settings,
-      floating: {
-        ...settings.floating,
-        rotationX: settings.floating.rotationX + deltaY * 0.8,
-        rotationY: settings.floating.rotationY + deltaX * 0.8,
-      },
-    }));
+    moveFloatingParcel(e.currentTarget, deltaX, deltaY);
   }
 
   function handleFloatingParcelPointerUp() {
@@ -473,24 +498,17 @@ export default function Home() {
   }
 
   function handleFloatingParcelKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    const rotationByKey: Record<string, { x: number; y: number }> = {
-      ArrowDown: { x: 8, y: 0 },
-      ArrowLeft: { x: 0, y: -8 },
-      ArrowRight: { x: 0, y: 8 },
-      ArrowUp: { x: -8, y: 0 },
+    const movementByKey: Record<string, { x: number; y: number }> = {
+      ArrowDown: { x: 0, y: 12 },
+      ArrowLeft: { x: -12, y: 0 },
+      ArrowRight: { x: 12, y: 0 },
+      ArrowUp: { x: 0, y: -12 },
     };
-    const rotation = rotationByKey[e.key];
-    if (!rotation) return;
+    const movement = movementByKey[e.key];
+    if (!movement) return;
 
     e.preventDefault();
-    setHeroParcelSettings((settings) => ({
-      ...settings,
-      floating: {
-        ...settings.floating,
-        rotationX: settings.floating.rotationX + rotation.x,
-        rotationY: settings.floating.rotationY + rotation.y,
-      },
-    }));
+    moveFloatingParcel(e.currentTarget, movement.x, movement.y);
   }
 
   return (
@@ -587,7 +605,10 @@ export default function Home() {
         </div>
 
         {/* FLOATING PARCELS */}
-        <div className="floating-boxes [position:absolute] [width:100%] [height:100%] [top:0] [left:0] [pointer-events:none] [z-index:6]">
+        <div
+          ref={floatingParcelFieldRef}
+          className="floating-boxes [position:absolute] [width:100%] [height:100%] [top:0] [left:0] [pointer-events:none] [z-index:6]"
+        >
           <FloatingParcelField
             parcels={[
               {
@@ -634,7 +655,7 @@ export default function Home() {
             style={getParcelPlacementStyle("floating", heroParcelSettings.floating)}
             role="button"
             tabIndex={0}
-            aria-label="Drag or use the arrow keys to spin the floating parcel"
+            aria-label="Drag or use the arrow keys to move the floating parcel"
             onPointerDown={handleFloatingParcelPointerDown}
             onPointerMove={handleFloatingParcelPointerMove}
             onPointerUp={handleFloatingParcelPointerUp}
