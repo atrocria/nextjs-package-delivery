@@ -41,7 +41,14 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    const requestedPath = new URLSearchParams(window.location.search).get("next");
+    const nextPath =
+      requestedPath?.startsWith("/") &&
+      !requestedPath.startsWith("//") &&
+      !requestedPath.includes("\\")
+        ? requestedPath
+        : "/dashboard";
+    router.push(nextPath);
   }
 
   return (

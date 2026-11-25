@@ -6,8 +6,7 @@ import { usePathname } from "next/navigation";
 export default function Navbar() {
   const pathname = usePathname();
 
-  // Hide dashboard navigation on the PLOP landing page
-  if (pathname === "/") {
+  if (pathname === "/" || pathname === "/shipping") {
     return null;
   }
 

@@ -18,12 +18,18 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Supabase setup
 
-Copy `.env.example` to `.env.local`, then add the URL and publishable key from
-your Supabase project's API settings:
+1. Create a Supabase project and enable Email authentication under **Authentication → Providers**.
+2. Copy `.env.example` to `.env.local` and fill in the project URL and publishable key from **Project Settings → API**.
+   On Windows PowerShell:
 
-```bash
-cp .env.example .env.local
-```
+   ```powershell
+   Copy-Item .env.example .env.local
+   ```
+
+3. In the Supabase SQL Editor, run [`supabase/schema.sql`](./supabase/schema.sql). It creates the `shipping_drafts` table, enables row-level security, and restricts draft access to the signed-in owner.
+4. Restart the Next.js development server after editing `.env.local`.
+
+The shipping flow keeps an unauthenticated What & where form in session storage while redirecting to sign-in. After sign-in, continue the flow to save it to `shipping_drafts`. Delivery choices are saved as a draft; this setup does not collect payment or create a parcel.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
