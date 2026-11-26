@@ -13,9 +13,10 @@ import {
   ShieldCheck,
   Truck,
 } from "lucide-react";
+import HeroParcel, { FloatingParcelField } from "@/components/HeroParcel";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import HeroParcel, { FloatingParcelField } from "@/components/HeroParcel";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import gsap from "gsap";
 
@@ -526,9 +527,9 @@ export default function Home() {
           id="primary-navigation"
           className={`nav-links ${menuOpen ? "open" : ""}`}
         >
-          <a href="#services" onClick={() => setMenuOpen(false)}>
-            Services
-          </a>
+          <Link href="/shipping" onClick={() => setMenuOpen(false)}>
+            Send a package
+          </Link>
           <a href="#tracking" onClick={() => setMenuOpen(false)}>
             Track parcel
           </a>

@@ -168,7 +168,7 @@ function ParcelCursor({
   if (!visible) return null;
 
   return (
-    <div className="parcel-cursor" style={{ left: x - 22, top: y - 58 }} aria-hidden="true">
+    <div className="parcel-cursor" style={{ left: x - 22, top: y - 48 }} aria-hidden="true">
       <span className="parcel-cursor-box">📦</span>
       <span className="parcel-cursor-arrow">˯</span>
     </div>
@@ -751,7 +751,7 @@ export default function DeliveryPage() {
           min-height: 0;
           margin: 0 auto;
           display: grid;
-          grid-template-rows: 52px minmax(0, 1fr);
+          grid-template-rows: 60px minmax(0, 1fr);
           gap: 12px;
         }
         .shipping-topbar {
@@ -760,7 +760,7 @@ export default function DeliveryPage() {
         }
         .shipping-glass-pill {
           display: inline-flex; align-items: center; justify-content: center;
-          height: 38px; box-sizing: border-box; border: 0;
+          height: 42px; box-sizing: border-box; border: 0;
           border-radius: 13px; padding: 0 14px;
           background: linear-gradient(145deg, rgba(224,225,225,.72), rgba(190,193,194,.38));
           box-shadow: 0 3px 12px rgba(74,54,34,.045), inset 0 1px 0 rgba(255,255,255,.72);
@@ -770,7 +770,7 @@ export default function DeliveryPage() {
         .shipping-brand-menu { position: relative; z-index: 20; justify-self: start; }
         .shipping-brand-pill {
           display: flex; align-items: center; justify-content: center; gap: 7px;
-          width: 156px; height: 40px; box-sizing: border-box;
+          width: 168px; height: 46px; box-sizing: border-box;
           padding: 0 10px; border: 0; border-radius: 14px;
           background: linear-gradient(145deg, rgba(224,225,225,.72), rgba(190,193,194,.38));
           box-shadow: 0 3px 12px rgba(74,54,34,.045), inset 0 1px 0 rgba(255,255,255,.72);
@@ -778,7 +778,7 @@ export default function DeliveryPage() {
         }
         .shipping-brand {
           display: flex; flex: 0 0 auto; align-items: center; gap: 6px; height: 100%;
-          color: var(--ship-dark); font: 700 23px/1 "Fredoka", sans-serif;
+          color: var(--ship-dark); font: 700 25px/1 "Fredoka", sans-serif;
           letter-spacing: -1.3px;
           text-decoration: none;
         }
@@ -811,10 +811,10 @@ export default function DeliveryPage() {
         }
         .shipping-progress {
           position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-          align-items: start; width: 100%; height: 52px; isolation: isolate;
+          align-items: start; width: 100%; height: 60px; isolation: isolate;
         }
         .shipping-progress-track {
-          position: absolute; z-index: -1; left: 16.666%; right: 16.666%; top: 15px;
+          position: absolute; z-index: -1; left: 16.666%; right: 16.666%; top: 17px;
           height: 2px; background: #ded8ce;
         }
         .shipping-progress-fill { height: 100%; background: var(--ship-orange); transition: width .35s ease; }
@@ -825,7 +825,7 @@ export default function DeliveryPage() {
         }
         .shipping-step.active, .shipping-step.complete { color: var(--ship-dark); }
         .shipping-step-number {
-          display: grid; place-items: center; width: 32px; height: 32px; box-sizing: border-box;
+          display: grid; place-items: center; width: 36px; height: 36px; box-sizing: border-box;
           border: 2px solid #ded8ce; border-radius: 50%; background: #f5f0e8;
           color: #918a7f; font-size: 12px; font-weight: 700;
           transition: background .25s, border-color .25s, color .25s, transform .25s;
@@ -862,7 +862,7 @@ export default function DeliveryPage() {
         .map-pin { position: absolute; transform: translate(-50%, -100%); color: #ff914d; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
         .map-pin span { display: flex; align-items: center; gap: 4px; background: #ff914d; border-radius: 18px; padding: 6px 10px; color: white; font-size: 11px; font-weight: 700; white-space: nowrap; box-shadow: 0 4px 12px #ff914d55; }
         .map-pin i { width: 2px; height: 12px; background: #ff914d; }
-        .parcel-cursor { position: fixed; width: 44px; height: 58px; pointer-events: none; z-index: 9999; filter: drop-shadow(0 3px 4px rgba(80,40,10,.24)); }
+        .parcel-cursor { position: fixed; width: 44px; height: 48px; pointer-events: none; z-index: 9999; filter: drop-shadow(0 3px 4px rgba(80,40,10,.24)); }
         .parcel-cursor-box { position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 32px; line-height: 34px; }
         .parcel-cursor-arrow { position: absolute; left: 50%; bottom: 0; color: #ff914d; transform: translateX(-50%); font: 700 30px/24px "DM Sans", sans-serif; }
         .map-zoom-controls { position: absolute; z-index: 5; top: 12px; right: 12px; display: grid; gap: 6px; }
@@ -904,8 +904,9 @@ export default function DeliveryPage() {
         .shipping-button.secondary { color: #55524b; background: #f4f0e9; box-shadow: none; }
         .shipping-button:disabled { opacity: .6; cursor: wait; }
         .shipping-button-square { width: 100%; min-height: 46px; border-radius: 12px; }
-        .shipping-input-actions { display: flex; flex: 0 0 auto; margin-top: auto; padding-top: 14px; }
-        .shipping-error { flex: 0 0 auto; border: 1px solid #f3c8c0; border-radius: 12px; background: #fff0ee; padding: 9px 12px; color: #a93226; font-size: 12px; margin: 9px 0 0; }
+        .shipping-input-actions { display: flex; flex: 0 0 auto; flex-direction: column; gap: 8px; margin-top: auto; padding-top: 14px; }
+        .shipping-error-slot { display: flex; flex: 0 0 48px; align-items: center; }
+        .shipping-error { width: 100%; flex: 0 0 auto; border: 1px solid #f3c8c0; border-radius: 12px; background: #fff0ee; padding: 8px 11px; color: #a93226; font-size: 12px; line-height: 1.25; margin: 0; }
         .shipping-payment-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0 16px; }
         .shipping-payment-option { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #dbd9d3; border-radius: 13px; background: #f7f6f3; cursor: pointer; font-size: 12px; font-weight: 700; }
         .shipping-payment-option.selected { border-color: #ff914d; background: #f3eee8; }
@@ -928,16 +929,16 @@ export default function DeliveryPage() {
         }
         @media (max-width: 640px) {
           .shipping-page { padding: 9px 10px; }
-          .shipping-wrap { grid-template-rows: 50px minmax(0, 1fr); gap: 7px; }
+          .shipping-wrap { grid-template-rows: 56px minmax(0, 1fr); gap: 7px; }
           .shipping-topbar { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; }
-          .shipping-brand-pill { width: 125px; height: 36px; border-radius: 12px; padding: 0 7px 0 11px; }
+          .shipping-brand-pill { width: 136px; height: 40px; border-radius: 12px; padding: 0 7px 0 11px; }
           .shipping-brand-toggle { width: 25px; height: 25px; }
-          .shipping-glass-pill { height: 34px; border-radius: 11px; padding: 0 11px; }
-          .shipping-brand { font-size: 21px; }
-          .shipping-progress { height: 48px; }
-          .shipping-progress-track { top: 13px; }
+          .shipping-glass-pill { height: 38px; border-radius: 11px; padding: 0 11px; }
+          .shipping-brand { font-size: 22px; }
+          .shipping-progress { height: 54px; }
+          .shipping-progress-track { top: 14px; }
           .shipping-step { gap: 3px; font-size: 9px; line-height: 1.05; }
-          .shipping-step-number { width: 27px; height: 27px; }
+          .shipping-step-number { width: 30px; height: 30px; }
           .shipping-card { padding: 11px; border-radius: 18px; }
           .shipping-what-where { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(130px, .72fr) minmax(0, 1.28fr); gap: 10px; }
           .shipping-map { border-radius: 13px; }
@@ -956,6 +957,8 @@ export default function DeliveryPage() {
           .shipping-actions { margin-top: 8px; }
           .shipping-button { min-height: 37px; padding: 0 13px; font-size: 12px; }
           .shipping-input-actions { padding-top: 9px; }
+          .shipping-error-slot { flex-basis: 52px; }
+          .shipping-error { padding: 6px 8px; font-size: 10px; }
           .shipping-button-square { min-height: 38px; }
           .shipping-payment-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin: 8px 0; }
           .shipping-payment-option { gap: 6px; padding: 9px; font-size: 10px; }
@@ -967,10 +970,10 @@ export default function DeliveryPage() {
         }
         @media (max-height: 700px) {
           .shipping-page { padding-top: 7px; padding-bottom: 7px; }
-          .shipping-wrap { grid-template-rows: 45px minmax(0, 1fr); gap: 6px; }
-          .shipping-progress { height: 45px; }
+          .shipping-wrap { grid-template-rows: 52px minmax(0, 1fr); gap: 6px; }
+          .shipping-progress { height: 50px; }
           .shipping-progress-track { top: 13px; }
-          .shipping-step-number { width: 28px; height: 28px; }
+          .shipping-step-number { width: 30px; height: 30px; }
           .shipping-step { gap: 3px; font-size: 9px; }
           .shipping-card { padding: 12px 16px; }
           .shipping-what-where { gap: 14px; }
@@ -981,8 +984,8 @@ export default function DeliveryPage() {
           .shipping-actions { margin-top: 8px; }
         }
         @media (max-width: 640px) and (max-height: 740px) {
-          .shipping-wrap { grid-template-rows: 52px minmax(0, 1fr); gap: 4px; }
-          .shipping-progress { height: 49px; }
+          .shipping-wrap { grid-template-rows: 56px minmax(0, 1fr); gap: 4px; }
+          .shipping-progress { height: 54px; }
           .shipping-card { padding: 8px; }
           .shipping-what-where { grid-template-rows: minmax(105px, .65fr) minmax(0, 1.35fr); gap: 7px; }
           .shipping-card-heading { margin-bottom: 6px; }
@@ -1104,6 +1107,9 @@ export default function DeliveryPage() {
                     />
                   </div>
                   <div className="shipping-input-actions">
+                    <div className="shipping-error-slot">
+                      {errorMessage && <p className="shipping-error" role="alert">{errorMessage}</p>}
+                    </div>
                     <button
                       className="shipping-button shipping-button-square"
                       type="button"
@@ -1199,7 +1205,11 @@ export default function DeliveryPage() {
               </div>
             )}
 
-            {errorMessage && <p className="shipping-error" role="alert">{errorMessage}</p>}
+            {currentStep > 0 && (
+              <div className="shipping-error-slot">
+                {errorMessage && <p className="shipping-error" role="alert">{errorMessage}</p>}
+              </div>
+            )}
 
             {currentStep > 0 && <div className="shipping-actions">
               {currentStep > 0 ? (
