@@ -9,7 +9,7 @@ const shipments = [
     route: "Kuala Lumpur → Johor Bahru",
     date: "7 Nov 2026",
     status: "On the way",
-    color: "bg-[#fff1e5] text-[#a8531d] ring-[#f2d1b6]",
+    color: "bg-[#fff1e5] text-[#393832] ring-[#f2d1b6]",
   },
   {
     id: "PKG-48276",
@@ -44,7 +44,7 @@ function MetricCard({
 }) {
   return (
     <article
-      className={`relative overflow-hidden rounded-2xl border p-5 shadow-[0_8px_24px_rgba(27,31,34,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(27,31,34,0.12)] ${
+      className={`relative overflow-hidden rounded-2xl border p-4 shadow-[0_8px_24px_rgba(27,31,34,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(27,31,34,0.12)] ${
         featured
           ? "border-[#1c1c19] bg-[#1c1c19] text-white shadow-[0_10px_26px_rgba(24,25,26,0.2)]"
           : "border-[#c6cbcd] bg-white text-[#1c1c19]"
@@ -58,10 +58,10 @@ function MetricCard({
       )}
       <div className="relative z-10 flex items-start justify-between">
         <div>
-          <p className={`text-sm font-medium ${featured ? "text-[#f4b77f]" : "text-[#78756f]"}`}>
+          <p className={`text-sm font-medium ${featured ? "text-white/80" : "text-[#78756f]"}`}>
             {title}
           </p>
-          <p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p>
+          <p className="mt-2 text-3xl font-semibold tracking-tight">{value}</p>
         </div>
         <span
           aria-hidden="true"
@@ -74,7 +74,7 @@ function MetricCard({
           {icon}
         </span>
       </div>
-      <p className={`relative z-10 mt-5 text-xs ${featured ? "text-[#f4b77f]" : "text-[#78756f]"}`}>
+      <p className={`relative z-10 mt-4 text-xs ${featured ? "text-white/80" : "text-[#78756f]"}`}>
         {note}
       </p>
     </article>
@@ -84,16 +84,12 @@ function MetricCard({
 export default function Home() {
   return (
     <div
-      className="min-h-screen bg-[#e5e7e8] px-4 py-6 sm:px-7 sm:py-8"
-      style={{
-        backgroundImage:
-          "radial-gradient(ellipse at 18% 0%, rgba(255,255,255,0.88) 0%, transparent 58%), linear-gradient(135deg, #eef0f1 0%, #ffffff 52%, #e9ebec 100%)",
-      }}
+      className="dashboard-background min-h-screen px-4 py-4 sm:px-7 sm:py-6"
     >
       <div className="mx-auto max-w-7xl">
-        <header className="mb-7 flex flex-col gap-4 px-2 sm:flex-row sm:items-end sm:justify-between">
+        <header className="mb-4 flex flex-col gap-4 px-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold tracking-[0.18em] text-[#b5531f]">OVERVIEW</p>
+            <p className="text-xs font-bold tracking-[0.18em] text-[#555d61]">OVERVIEW</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#1c1c19] sm:text-4xl">
               Your shipping, at a glance.
             </h1>
@@ -111,9 +107,9 @@ export default function Home() {
           </Link>
         </header>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,2.05fr)_minmax(300px,0.95fr)]">
-          <div className="min-w-0 space-y-5">
-            <section className="grid gap-5 sm:grid-cols-3" aria-label="Shipment metrics">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,2.05fr)_minmax(300px,0.95fr)]">
+          <div className="min-w-0 space-y-4">
+            <section className="grid gap-4 sm:grid-cols-3" aria-label="Shipment metrics">
               <MetricCard
                 featured
                 icon={<Package size={19} />}
@@ -135,7 +131,7 @@ export default function Home() {
               />
             </section>
 
-            <section className="rounded-[22px] border border-[#c6cbcd] bg-white p-5 shadow-[0_10px_28px_rgba(37,43,47,0.08)] sm:p-6">
+            <section className="rounded-[22px] border border-[#c6cbcd] bg-white p-4 shadow-[0_10px_28px_rgba(37,43,47,0.08)] sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-[#1c1c19]">Shipment activity</h2>
@@ -154,7 +150,7 @@ export default function Home() {
                 </div>
               </div>
               <div
-                className="mt-7 h-52 rounded-xl border border-dashed border-[#aeb6ba] bg-[#e5e8e9] px-4 pt-4 sm:h-60"
+                className="mt-5 h-48 rounded-xl border border-dashed border-[#aeb6ba] bg-[#e5e8e9] px-4 pt-4 sm:h-52"
                 style={{
                   backgroundImage:
                     "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.8) 0%, transparent 72%), linear-gradient(180deg, #f7f8f8, #e9ebec)",
@@ -236,9 +232,9 @@ export default function Home() {
             </section>
           </div>
 
-          <aside className="min-w-0 space-y-5">
+          <aside className="min-w-0 space-y-4">
             <section
-              className="rounded-[22px] border border-[#c6cbcd] bg-white p-5 shadow-[0_10px_28px_rgba(37,43,47,0.08)] sm:p-6"
+              className="rounded-[22px] border border-[#c6cbcd] bg-white p-4 shadow-[0_10px_28px_rgba(37,43,47,0.08)] sm:p-5"
               id="tracking"
             >
               <div className="flex items-center justify-between">
@@ -246,11 +242,11 @@ export default function Home() {
                   <p className="text-sm font-medium text-[#78756f]">Live tracking</p>
                   <h2 className="mt-1 text-xl font-semibold text-[#1c1c19]">#PKG-48291</h2>
                 </div>
-                <span className="rounded-full bg-[#f5d9bb] px-3 py-1.5 text-xs font-semibold text-[#a8531d] ring-1 ring-inset ring-[#e6c19a]">
+                <span className="rounded-full bg-[#f5d9bb] px-3 py-1.5 text-xs font-semibold text-[#393832] ring-1 ring-inset ring-[#e6c19a]">
                   On the way
                 </span>
               </div>
-              <ol className="mt-7 space-y-6 border-l border-dashed border-[#d6d1c7] pl-5 text-sm">
+              <ol className="mt-5 space-y-5 border-l border-dashed border-[#d6d1c7] pl-5 text-sm">
                 <li className="relative">
                   <i className="absolute -left-[25px] top-1 size-2.5 rounded-full bg-[#1c1c19] ring-4 ring-white" />
                   <p className="font-semibold text-[#292824]">Parcel collected</p>
@@ -268,19 +264,19 @@ export default function Home() {
                 </li>
               </ol>
               <Link
-                className="mt-7 block rounded-xl border border-[#292824] bg-[#1c1c19] py-3 text-center text-sm font-semibold text-[#f4b77f] transition hover:bg-[#353128]"
+                className="mt-5 block rounded-xl border border-[#292824] bg-[#1c1c19] py-3 text-center text-sm font-semibold text-white transition hover:bg-[#353128]"
                 href="/register"
               >
                 Track your parcel
               </Link>
             </section>
 
-            <section className="rounded-[22px] border border-[#c6cbcd] bg-white p-5 shadow-[0_10px_28px_rgba(37,43,47,0.08)] sm:p-6">
+            <section className="rounded-[22px] border border-[#c6cbcd] bg-white p-4 shadow-[0_10px_28px_rgba(37,43,47,0.08)] sm:p-5">
               <h2 className="text-lg font-semibold text-[#1c1c19]">Delivery estimates</h2>
               <p className="mt-1 text-sm text-[#78756f]">
                 Typical delivery times from our hub.
               </p>
-              <div className="mt-6 space-y-5">
+              <div className="mt-5 space-y-4">
                 {[
                   ["Within Klang Valley", "1–2 business days", "w-[42%]", "bg-[#1c1c19]"],
                   ["West Malaysia", "2–4 business days", "w-[65%]", "bg-[#e8874c]"],

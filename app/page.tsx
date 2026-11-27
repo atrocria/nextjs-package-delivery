@@ -11,6 +11,7 @@ import {
   PackageCheck,
   Plane,
   ShieldCheck,
+  SlidersHorizontal,
   Truck,
 } from "lucide-react";
 import HeroParcel, { FloatingParcelField } from "@/components/HeroParcel";
@@ -24,7 +25,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const BOX_ROTATIONS = {
   floating: { x: 0, y: -90, z: 0 },
-  bouncing: { x: 61, y: -84, z: 16 },
+  bouncing: { x: 61, y: -79, z: 16 },
 } as const;
 
 const DROP_LANDING_ROTATION = { x: 0, y: -90, z: 0 } as const;
@@ -40,6 +41,24 @@ type ParcelDebugSettings = {
   offsetX: number;
   offsetY: number;
 };
+
+type ParcelControl = {
+  key: keyof ParcelDebugSettings;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  suffix: string;
+};
+
+const PARCEL_CONTROLS: ParcelControl[] = [
+  { key: "rotationX", label: "Rotate X", min: -180, max: 180, step: 1, suffix: "°" },
+  { key: "rotationY", label: "Rotate Y", min: -180, max: 180, step: 1, suffix: "°" },
+  { key: "rotationZ", label: "Rotate Z", min: -180, max: 180, step: 1, suffix: "°" },
+  { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.05, suffix: "×" },
+  { key: "offsetX", label: "Move X", min: -15, max: 15, step: 1, suffix: "%" },
+  { key: "offsetY", label: "Move Y", min: -15, max: 15, step: 1, suffix: "%" },
+];
 
 const HERO_PARCEL_POSITIONS: Record<
   HeroParcelId,
@@ -87,46 +106,55 @@ const INITIAL_HERO_PARCELS: Record<HeroParcelId, ParcelDebugSettings> = {
     offsetY: 0,
   },
   "float-b": {
-    rotationX: -42,
-    rotationY: -20,
-    rotationZ: -24,
-    scale: 1.2,
+    rotationX: -141,
+    rotationY: -53,
+    rotationZ: -70,
+    scale: 1.3,
     offsetX: 0,
     offsetY: 0,
   },
   "float-c": {
-    rotationX: -12,
+    rotationX: -63,
     rotationY: 35,
-    rotationZ: -8,
-    scale: 1,
-    offsetX: 0,
-    offsetY: 0,
+    rotationZ: -173,
+    scale: 1.05,
+    offsetX: 1,
+    offsetY: -6,
   },
   "float-d": {
-    rotationX: 28,
+    rotationX: 26,
     rotationY: -68,
     rotationZ: 4,
-    scale: 1,
-    offsetX: 0,
-    offsetY: 0,
+    scale: 0.85,
+    offsetX: 2,
+    offsetY: -2,
   },
   "float-e": {
-    rotationX: -22,
-    rotationY: 64,
+    rotationX: 29,
+    rotationY: -180,
     rotationZ: -14,
-    scale: 1,
-    offsetX: 0,
+    scale: 0.8,
+    offsetX: 2,
     offsetY: 0,
   },
   main: {
     rotationX: BOX_ROTATIONS.bouncing.x,
     rotationY: BOX_ROTATIONS.bouncing.y,
     rotationZ: BOX_ROTATIONS.bouncing.z,
-    scale: 1,
-    offsetX: 0,
-    offsetY: 0,
+    scale: 1.05,
+    offsetX: 1,
+    offsetY: -10,
   },
 };
+
+const PARCEL_CONTROL_TARGETS: { id: HeroParcelId; label: string }[] = [
+  { id: "main", label: "Hero parcel" },
+  { id: "floating", label: "Floating parcel 1" },
+  { id: "float-b", label: "Floating parcel 2" },
+  { id: "float-c", label: "Floating parcel 3" },
+  { id: "float-d", label: "Floating parcel 4" },
+  { id: "float-e", label: "Floating parcel 5" },
+];
 
 const RETURN_TO_HERO_SESSION_KEY = "plop-return-to-hero";
 
@@ -161,11 +189,9 @@ function getParcelPlacementStyle(id: HeroParcelId, settings: ParcelDebugSettings
   const top = `calc(var(${position.top}) + ${settings.offsetY}%)`;
   const horizontal = `calc(var(${position.horizontal}) ${position.side === "left" ? "+" : "-"} ${settings.offsetX}%)`;
 
-  if (position.side === "left") {
-    return { top, left: horizontal, transform: `scale(${settings.scale})` };
-  }
-
-  return { top, right: horizontal };
+  const placement =
+    position.side === "left" ? { top, left: horizontal } : { top, right: horizontal };
+  return id === "main" ? placement : { ...placement, transform: `scale(${settings.scale})` };
 }
 
 function ParcelIllustration({
@@ -605,6 +631,74 @@ export default function Home() {
           </div>
         </div>
 
+        <details className="absolute bottom-11 left-[7%] z-20 w-[min(360px,86vw)] rounded-2xl border border-white/40 bg-[#292923]/90 p-3 text-white shadow-xl backdrop-blur-md">
+          <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold">
+            <SlidersHorizontal size={16} aria-hidden="true" />
+            Parcel controls
+          </summary>
+          <p className="mt-2 text-xs text-white/70">
+            Each parcel has independent rotation, scale, and position controls.
+          </p>
+          <div className="mt-3 max-h-[55svh] space-y-2 overflow-y-auto pr-1">
+            {PARCEL_CONTROL_TARGETS.map((target) => (
+              <details className="rounded-lg bg-white/10 px-2 py-1.5" key={target.id}>
+                <summary className="cursor-pointer py-1 text-xs font-semibold">
+                  {target.label}
+                </summary>
+                <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
+                  {PARCEL_CONTROLS.map((control) => {
+                    const value = heroParcelSettings[target.id][control.key];
+                    const formattedValue =
+                      control.key === "scale"
+                        ? `${value.toFixed(2)}${control.suffix}`
+                        : `${value}${control.suffix}`;
+
+                    return (
+                      <label className="min-w-0 text-xs" key={control.key}>
+                        <span className="mb-1 flex justify-between gap-2">
+                          <span>{control.label}</span>
+                          <output>{formattedValue}</output>
+                        </span>
+                        <input
+                          aria-label={`${target.label} ${control.label}`}
+                          className="w-full accent-[#ff914d]"
+                          max={control.max}
+                          min={control.min}
+                          onChange={(event) => {
+                            const value = Number(event.currentTarget.value);
+                            setHeroParcelSettings((current) => ({
+                              ...current,
+                              [target.id]: {
+                                ...current[target.id],
+                                [control.key]: value,
+                              },
+                            }));
+                          }}
+                          step={control.step}
+                          type="range"
+                          value={value}
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+                <button
+                  className="mt-2 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold transition hover:bg-white/20"
+                  onClick={() =>
+                    setHeroParcelSettings((current) => ({
+                      ...current,
+                      [target.id]: INITIAL_HERO_PARCELS[target.id],
+                    }))
+                  }
+                  type="button"
+                >
+                  Reset {target.label.toLowerCase()}
+                </button>
+              </details>
+            ))}
+          </div>
+        </details>
+
         {/* FLOATING PARCELS */}
         <div
           ref={floatingParcelFieldRef}
@@ -691,7 +785,7 @@ export default function Home() {
 
         {/* HERO MAIN PARCEL (3D & PANNABLE) */}
         <div
-          className="hero-box-container [position:absolute] [width:min(540px,_42vw,_70svh)] [height:min(540px,_50vw,_70svh)] [min-width:240px] [min-height:240px] [pointer-events:auto] [z-index:10] [user-select:none]"
+          className="hero-box-container [position:absolute] [width:min(620px,_48vw,_82svh)] [height:min(620px,_58vw,_82svh)] [min-width:240px] [min-height:240px] [pointer-events:auto] [z-index:10] [user-select:none]"
           style={getParcelPlacementStyle("main", heroParcelSettings.main)}
         >
           <div
@@ -702,6 +796,8 @@ export default function Home() {
               <HeroParcel
                 interactive
                 motion="bob"
+                motionAmplitude={0.075}
+                motionSpeed={1.7}
                 quarterView
                 rotationXDegrees={heroParcelSettings.main.rotationX}
                 rotationYDegrees={heroParcelSettings.main.rotationY}
@@ -1723,8 +1819,8 @@ export default function Home() {
             --hero-parcel-right: 5%;
           }
           .hero-box-container {
-            width: min(190px, 52vw);
-            height: min(190px, 52vw);
+            width: min(230px, 60vw);
+            height: min(230px, 60vw);
             min-width: 0;
             min-height: 0;
           }

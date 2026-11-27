@@ -20,6 +20,7 @@ type HeroParcelProps = {
   dropElapsedRef?: { current: number };
   dropDelaySeconds?: number;
   dropDurationSeconds?: number;
+  motionAmplitude?: number;
   motionSpeed?: number;
   rotationXDegrees?: number;
   rotationYDegrees?: number;
@@ -32,6 +33,7 @@ type HeroParcelProps = {
 
 function Parcel({
   parcelRef,
+  motionAmplitude = 0.045,
   motionSpeed = 1,
   dropStartRotation = { x: 0, y: 0, z: 0 },
   dropElapsedRef,
@@ -73,6 +75,11 @@ function Parcel({
 
     return clonedScene;
   }, [scene]);
+  const camera = useThree((state) => state.camera);
+  const bobOrigin = useRef<Vector3 | null>(null);
+  const screenUp = useMemo(() => new Vector3(), []);
+  const cameraWorldQuaternion = useMemo(() => new Quaternion(), []);
+  const parentWorldQuaternion = useMemo(() => new Quaternion(), []);
 
   useFrame(({ clock }) => {
     if (!parcelRef.current) return;
@@ -121,12 +128,27 @@ function Parcel({
       return;
     }
 
-    parcelRef.current.position.y = Math.sin(elapsed) * 0.045;
-
     if (motion === "bob") {
+      if (!bobOrigin.current) {
+        bobOrigin.current = parcelRef.current.position.clone();
+      }
+
+      camera.getWorldQuaternion(cameraWorldQuaternion);
+      screenUp.set(0, 1, 0).applyQuaternion(cameraWorldQuaternion);
+      const parent = parcelRef.current.parent;
+      if (parent) {
+        parent.getWorldQuaternion(parentWorldQuaternion).invert();
+        screenUp.applyQuaternion(parentWorldQuaternion);
+      }
+
+      parcelRef.current.position
+        .copy(bobOrigin.current)
+        .addScaledVector(screenUp.normalize(), Math.sin(elapsed) * motionAmplitude);
       parcelRef.current.rotation.set(rotationX, rotationY, rotationZ);
       return;
     }
+
+    parcelRef.current.position.y = Math.sin(elapsed) * motionAmplitude;
 
     if (motion === "free-spin") {
       parcelRef.current.rotation.set(
